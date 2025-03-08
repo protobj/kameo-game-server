@@ -45,7 +45,7 @@ impl std::fmt::Display for LubanError {
         })
     }
 }
-
+#[derive(Debug)]
 pub struct Tables{
     pub TbBlackboard: std::sync::Arc<crate::ai::TbBlackboard>,
     pub TbBehaviorTree: std::sync::Arc<crate::ai::TbBehaviorTree>,

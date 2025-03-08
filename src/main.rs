@@ -1,4 +1,4 @@
-use config::{AwsConfig, ConfigActor, ConfigActorArgument, ConfigActorMessage};
+use config::AwsConfig;
 use log::trace;
 use ractor::concurrency::Duration;
 use ractor::{Actor, ActorProcessingErr, ActorRef, Message, SupervisionEvent, cast};
@@ -10,17 +10,15 @@ async fn main() {
     let (rootActor, handle) = Actor::spawn(Some("Root".to_string()), RootActor, ())
         .await
         .expect("fail to start RootActor");
-    let (configActor, _) = rootActor
-        .spawn_linked(
-            Some("Config".to_string()),
-            ConfigActor {},
-            ConfigActorArgument {
-                aws_config: AwsConfig::default(),
-            },
-        )
-        .await
-        .expect("fail to start ConfigActor");
-    cast!(configActor, ConfigActorMessage::Load);
+    config::load(&AwsConfig::default());
+
+    for i in 0..200 {
+        tokio::spawn(async {
+            let tables = &config::get();
+            let name = &tables.TbItem.data_list[0].name;
+            println!("name:{name}")
+        });
+    }
 
     //等着root actor死亡
     handle.await.expect("Failed waiting for root actor to die");
