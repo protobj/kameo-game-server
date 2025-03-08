@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package cmd;
+
+//把请求分为
+// REQ：表示客户端发送的请求
+// RSP：表示服务器返回的响应
+// PUSH：表示服务器推送的消息
+// NTF：表示客户端通知不需要返回的请求
+//服务器内部发送的消息除了带上面的请求外，还有服务器指向服务器的标记，谁发给谁的必须要在消息名上体现
+//比如说 PlayerLoginGate2LoginReq,表示网关发给登录服的请求
+//举个简单的登录例子，首先是从PlayerLoginReq到PlayerLoginGate2LoginReq再到PlayerLoginGate2LoginRsp再到PlayerLoginRsp
+enum Cmd {
+    CMD_NONE = 0;//NONE
+    CMD_PLAYER_LOGIN_REQ = 1;//登录请求
+    CMD_PLAYER_LOGIN_RSP = 2;//登录响应
+}

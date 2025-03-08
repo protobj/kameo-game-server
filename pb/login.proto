@@ -1,0 +1,12 @@
+syntax = "proto3";
+package login;
+message LoginReq {
+  string account = 1;
+}
+message LoginRsp {
+  UserInfo user_info = 1;
+}
+message UserInfo {
+  int32 id = 1;// 用户id
+  string name = 2;// 用户名
+}

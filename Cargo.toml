@@ -1,0 +1,38 @@
+[workspace]
+members = ["luban_lib","gen/cfg", "gen/proto", "logging", "misc/config"]
+
+[package]
+name = "qs001-server"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+ractor = {workspace = true}
+tokio ={workspace = true}
+lazy_static = "1.4.0"
+cfg = { path = "gen/cfg"}
+luban_lib = { path = "luban_lib"}
+proto = { path = "gen/proto"}
+prost-types = "*"
+bytes="*"
+logging = { path = "logging"}
+log = "0.4.26"
+tracing={workspace = true}
+config = { path = "misc/config"}
+
+
+
+
+
+
+[build-dependencies]
+prost-build = "*"
+
+
+
+
+[workspace.dependencies]
+prost = "*"
+tokio ={version =  "1.43.0",features = ["full"]}
+tracing = {version = "0.1",features = ["attributes"]}
+ractor = {version = "0.15",features = ["async-trait","cluster"]}
