@@ -1,0 +1,37 @@
+services:
+  garage:
+    image: dxflrs/garage:c96be1a9a8aa3b51075678888b80c2414ead2909
+    container_name: garage
+    ports:
+      - '3900:3900'
+      - '3901:3901'
+      - '3902:3902'
+      - '3903:3903'
+    volumes:
+      - ./database/garage/data:/tmp/data
+      - ./database/garage/meta:/tmp/meta
+      - ./database/garage/garage.toml:/etc/garage.toml
+    environment:
+      - RUST_GARAGE_LOG=info
+    command: [ "/garage", "server" ]
+  keydb:
+    image: eqalpha/keydb:latest  # KeyDB官方镜像[1](@ref)
+    container_name: keydb
+    ports:
+      - "6379:6379"             # KeyDB默认端口
+    volumes:
+      - ./database/keydb/keydb.conf:/etc/keydb/keydb.conf  # 挂载配置文件[1](@ref)
+      - ./database/keydb/data:/data                  # 持久化数据目录
+    command: [ "keydb-server","/etc/keydb/keydb.conf" ]  # 指定配置文件启动[1](@ref)
+  kvrocks:
+    image: apache/kvrocks:latest  # KvRocks官方镜像
+    container_name: kvrocks
+    restart: always
+    ports:
+      - "6666:6666"             # KvRocks默认端口
+    user: "1000:1000"
+    volumes:
+      - "./database/kvrocks/data:/var/lib/kvrocks"           # 持久化数据目录
+      - "./database/kvrocks/log:/var/log"
+      - "./database/kvrocks/kvrocks.conf:/etc/kvrocks/kvrocks.conf"
+    entrypoint:  ["kvrocks", "-c", "/etc/kvrocks/kvrocks.conf"]

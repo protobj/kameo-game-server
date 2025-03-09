@@ -1,6 +1,8 @@
 [database]
-mysql_url = "mysql://user:password@localhost:3306/qs001"
-redis_url = "redis://localhost:6379/0"
+mysql_url = "mysql://user:password@localhost:3306"
+redis_url = "redis://localhost:6379"
+[mysql]
+url="localhost:3306"
 
 [aws]
 region = "us-east-1"

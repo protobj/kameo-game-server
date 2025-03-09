@@ -1,5 +1,14 @@
 [workspace]
-members = ["luban_lib","gen/cfg", "gen/proto", "logging", "misc/config"]
+members = [
+    "luban_lib",
+    "gen/cfg",
+    "gen/proto",
+    "misc/logging",
+    "misc/config",
+    "cmd/login",
+    "internel/login",
+    "internel/gate",
+    "misc/net-tcp"]
 
 [package]
 name = "qs001-server"
@@ -7,21 +16,20 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-ractor = {workspace = true}
-tokio ={workspace = true}
+ractor = { workspace = true }
+tokio = { workspace = true }
 lazy_static = "1.4.0"
-cfg = { path = "gen/cfg"}
-luban_lib = { path = "luban_lib"}
-proto = { path = "gen/proto"}
+cfg = { path = "gen/cfg" }
+luban_lib = { path = "luban_lib" }
+proto = { path = "gen/proto" }
 prost-types = "*"
-bytes="*"
-logging = { path = "logging"}
+bytes = "*"
+logging = { path = "misc/logging" }
 log = "0.4.26"
-tracing={workspace = true}
-config = { path = "misc/config"}
-
-
-
+tracing = { workspace = true }
+config = { path = "misc/config" }
+tracing-subscriber = { workspace = true, features = ["env-filter"] }
+clap = { workspace = true, features = ["derive"] }
 
 
 
@@ -32,7 +40,10 @@ prost-build = "*"
 
 
 [workspace.dependencies]
+arc-swap = "*"
 prost = "*"
-tokio ={version =  "1.43.0",features = ["full"]}
-tracing = {version = "0.1",features = ["attributes"]}
-ractor = {version = "0.15",features = ["async-trait","cluster"]}
+tokio = { version = "1.43.0", features = ["full"] }
+tracing = { version = "0.1", features = ["attributes"] }
+ractor = { version = "0.15", features = ["async-trait", "cluster"] }
+clap = { version = "*", features = ["derive"] }
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }

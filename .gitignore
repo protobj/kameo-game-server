@@ -1,1 +1,6 @@
 /target
+/database/garage/data
+/database/garage/meta
+/database/keydb/data
+/database/kvrocks/data
+/database/kvrocks/log

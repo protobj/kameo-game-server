@@ -11,3 +11,6 @@ ractor = { workspace = true }
 tracing = { workspace = true }
 luban_lib = { path = "../../luban_lib" }
 crossbeam = "*"
+arc-swap = { workspace = true }
+clap = { workspace = true, features = ["derive"] }
+tracing-subscriber = { workspace = true }

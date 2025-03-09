@@ -1,54 +1,35 @@
-use aws_sdk_dynamodb::config::retry::ShouldAttempt::No;
-use cfg::Tables;
-use crossbeam::atomic::AtomicCell;
-use crossbeam::epoch;
-use crossbeam::epoch::{Atomic, Owned, Shared};
-use luban_lib::ByteBuf;
-use ractor::{async_trait, ActorProcessingErr, ActorRef};
-use std::ops::Deref;
-use std::path::PathBuf;
-use std::ptr;
-use std::sync::atomic::{AtomicPtr, Ordering};
-use std::sync::{Arc, OnceLock, RwLock, RwLockReadGuard};
+use crate::cluster::{Cluster, Role};
+use clap::Parser;
+use tracing_subscriber::filter::Directive;
 
-static TABLES: RwLock<Option<Arc<Tables>>> = RwLock::new(None);
+pub mod cluster;
+mod data;
 
-struct TableWrapper(Tables);
-pub fn load(aws_config: &AwsConfig) {
-    tracing::info!("load_config....");
-
-    let tables = _load(aws_config);
-    let mut _tables = TABLES.write().unwrap();
-    *_tables = Some(Arc::new(tables));
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+pub struct Args {
+    #[arg(short, long, default_value = "./config/dev.toml")]
+    pub config: String,
+    #[arg(short, long, default_value = "./config/base.toml")]
+    pub global_config: String,
+    #[arg(short = 'd', long, default_value = "./config/cluster-dev.toml")]
+    pub cluster_config: String,
+    #[arg(short, long, value_enum)]
+    pub role: Role,
+    #[arg(short, long)]
+    pub id: u32,
+    #[arg(short, long, default_value = "info", use_value_delimiter = true)]
+    pub log: Vec<Directive>,
 }
 
-pub fn reload(aws_config: &AwsConfig) {
-    tracing::info!("reload....");
-    let new_tables = _load(aws_config);
-    let mut _tables = TABLES.write().unwrap();
-    *_tables = Some(Arc::new(new_tables));
-    tracing::info!("reloaded");
+#[derive(Debug)]
+pub struct GlobalConfig {
+    pub args: Args,
+    pub cluster: Cluster,
 }
 
-pub fn get() -> Arc<Tables> {
-    TABLES.read().unwrap().clone().unwrap()
-}
-fn _load(aws_config: &AwsConfig) -> Tables {
-    let tables = Tables::new(|name| {
-        let path = PathBuf::from(format!(
-            "/home/cc/RustroverProjects/luban_examples/Projects/GenerateDatas/bytes/{}.bytes",
-            name
-        ));
-        Ok(ByteBuf::new(std::fs::read(path).unwrap()))
-    });
-    tables.expect("luban err")
-}
-
-#[derive(Debug, Clone, Default)]
-pub struct AwsConfig {
-    pub access_key_id: String,
-    pub secret_access_key: String,
-    pub region: String,
-    pub bucket: String,
-    pub endpoint: String,
+#[derive(Debug)]
+pub struct Database {
+    pub mysql_url: String,
+    pub redis_url: String,
 }

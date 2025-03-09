@@ -1,27 +1,19 @@
-use config::AwsConfig;
+use clap::Parser;
+use config::Args;
+use lazy_static::lazy_static;
 use log::trace;
-use ractor::concurrency::Duration;
-use ractor::{Actor, ActorProcessingErr, ActorRef, Message, SupervisionEvent, cast};
+use ractor::{cast, Actor, ActorProcessingErr, ActorRef, Message, SupervisionEvent};
+use std::env;
+use std::time::Duration;
 
 #[tokio::main]
 async fn main() {
-    ::logging::init_logging();
+    let args = Args::parse();
 
-    let (rootActor, handle) = Actor::spawn(Some("Root".to_string()), RootActor, ())
-        .await
-        .expect("fail to start RootActor");
-    config::load(&AwsConfig::default());
+    ::logging::init_logging(args.log.clone());
+    tracing::info!("args:{:?}", args);
+    tracing::info!("my id {}",config::cluster::get_server_id(&args.role, &args.id));
 
-    for i in 0..200 {
-        tokio::spawn(async {
-            let tables = &config::get();
-            let name = &tables.TbItem.data_list[0].name;
-            println!("name:{name}")
-        });
-    }
-
-    //等着root actor死亡
-    handle.await.expect("Failed waiting for root actor to die");
 }
 
 //作为服务器的根，管理者角色
