@@ -1,0 +1,10 @@
+[package]
+name = "redis"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+redis = { version = "0.29.1", features = ["tokio-comp", "r2d2"] }
+config = { path = "../config" }
+r2d2 = "*"
+anyhow = { workspace = true }

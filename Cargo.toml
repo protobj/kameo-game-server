@@ -8,7 +8,7 @@ members = [
     "cmd/login",
     "internel/login",
     "internel/gate",
-    "misc/net-tcp"]
+    "misc/net-tcp", "misc/redis"]
 
 [package]
 name = "qs001-server"
@@ -47,3 +47,4 @@ tracing = { version = "0.1", features = ["attributes"] }
 ractor = { version = "0.15", features = ["async-trait", "cluster"] }
 clap = { version = "*", features = ["derive"] }
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+anyhow = "*"

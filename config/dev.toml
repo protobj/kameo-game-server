@@ -1,8 +1,9 @@
-[database]
-mysql_url = "mysql://user:password@localhost:3306"
-redis_url = "redis://localhost:6379"
-[mysql]
-url="localhost:3306"
+[keydb]
+host = "localhost"
+port = 6379
+password = ""
+db = "0"
+pool_size = 16
 
 [aws]
 region = "us-east-1"
@@ -12,4 +13,4 @@ endpoint = "http://localhost:4566"
 bucket = "qs001"
 [config]
 # bin|json
-type="bin"
+type = "bin"

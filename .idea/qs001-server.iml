@@ -14,6 +14,7 @@
       <sourceFolder url="file://$MODULE_DIR$/internel/login/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/misc/logging/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/misc/net-tcp/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/misc/redis/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/net/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/net/tcp/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />

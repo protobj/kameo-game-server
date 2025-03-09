@@ -27,9 +27,17 @@ pub struct GlobalConfig {
     pub args: Args,
     pub cluster: Cluster,
 }
+impl GlobalConfig {
+    fn get_server_id(&self) -> String {
+        cluster::get_server_id(&self.args.role, &self.args.id)
+    }
+}
 
 #[derive(Debug)]
-pub struct Database {
-    pub mysql_url: String,
-    pub redis_url: String,
+pub struct RedisConfig {
+    pub host: String,
+    pub port: u16,
+    pub password: Option<String>,
+    pub db: i64,
+    pub pool_size: u32
 }
