@@ -2,7 +2,6 @@ use clap::Parser;
 use config::Args;
 use lazy_static::lazy_static;
 use log::trace;
-use prost_types::field::Cardinality::Optional;
 use ractor::{
     Actor, ActorId, ActorProcessingErr, ActorRef, Message, RpcReplyPort, SupervisionEvent,
     async_trait, cast,

@@ -1,6 +1,6 @@
 syntax = "proto3";
 package store;
-import "login.proto";
+import "client/login.proto";
 message StoreInfo{
     int32 id = 1;
     login.UserInfo user_info = 2;

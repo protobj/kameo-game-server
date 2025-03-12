@@ -2,13 +2,15 @@
 members = [
     "luban_lib",
     "gen/cfg",
-    "gen/proto",
     "misc/logging",
     "misc/config",
     "cmd/login",
     "internel/login",
     "internel/gate",
-    "misc/net-tcp", "misc/redis"]
+    "misc/net-tcp",
+    "misc/redis",
+    "protocol",
+]
 
 [package]
 name = "qs001-server"
@@ -22,8 +24,7 @@ tokio = { workspace = true }
 lazy_static = "1.4.0"
 cfg = { path = "gen/cfg" }
 luban_lib = { path = "luban_lib" }
-proto = { path = "gen/proto" }
-prost-types = "*"
+
 bytes = "*"
 logging = { path = "misc/logging" }
 log = "0.4.26"
@@ -34,22 +35,19 @@ clap = { workspace = true }
 
 
 [build-dependencies]
-prost-build = "*"
 
 
 
 
 [workspace.dependencies]
 arc-swap = "*"
-prost = "*"
 tokio = { version = "*", features = ["full"] }
 tracing = { version = "*", features = ["attributes"] }
 tracing-subscriber = { version = "*", features = ["env-filter"] }
-#ractor = { version = "*", features = ["cluster"] }
-#ractor_cluster = "*"
 ractor = { version = "0.13", features = ["cluster"] }
 ractor_cluster = "0.13"
 clap = { version = "*", features = ["derive"] }
-async-trait = "*"
 anyhow = "*"
 crossbeam-utils = "*"
+prost = "*"
+prost-build = "*"

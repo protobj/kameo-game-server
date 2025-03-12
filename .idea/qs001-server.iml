@@ -18,6 +18,8 @@
       <sourceFolder url="file://$MODULE_DIR$/net/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/net/tcp/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/internel/gs/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/protocol/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/protocol/src/client/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />

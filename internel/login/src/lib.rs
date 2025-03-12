@@ -1,14 +1,34 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
+use crossbeam_utils::sync::WaitGroup;
+pub async fn login_main(wg: Option<WaitGroup>) {
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+struct LoginServer;
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
+enum LoginServerMessage {
+    PlayerLogin { id: String },
+    GateMessage(),
+
+}
+
+struct LoginServerState {}
+
+#[derive(Debug, Clone, Default)]
+struct PlayerLoginGate2LoginReq {
+    session_id: i32,
+    msg: LoginInfo,
+}
+#[derive(Debug, Clone, Default)]
+struct LoginInfo {
+    account_type: i32,
+    account: String,
+    token: String,
+    user_id: i64,
+    local: UserLocalInfo,
+    server_id: i32,
+    user_name: String,
+}
+#[derive(Debug, Clone, Default)]
+struct UserLocalInfo {
+    ip: String,
+    device_name: String,
 }
