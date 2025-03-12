@@ -2,14 +2,11 @@
 members = [
     "luban_lib",
     "gen/cfg",
-    "misc/logging",
-    "misc/config",
     "cmd/login",
     "internel/login",
     "internel/gate",
-    "misc/net-tcp",
-    "misc/redis",
     "protocol",
+    "common",
 ]
 
 [package]
@@ -21,15 +18,13 @@ edition = "2024"
 ractor = { workspace = true }
 ractor_cluster = { workspace = true }
 tokio = { workspace = true }
-lazy_static = "1.4.0"
+common = { path = "common" }
 cfg = { path = "gen/cfg" }
 luban_lib = { path = "luban_lib" }
 
 bytes = "*"
-logging = { path = "misc/logging" }
 log = "0.4.26"
 tracing = { workspace = true }
-config = { path = "misc/config" }
 tracing-subscriber = { workspace = true, features = ["env-filter"] }
 clap = { workspace = true }
 

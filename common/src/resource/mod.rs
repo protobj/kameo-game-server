@@ -1,4 +1,3 @@
-
 use arc_swap::{ArcSwap, ArcSwapAny, ArcSwapOption};
 use aws_sdk_dynamodb::config::retry::ShouldAttempt::No;
 use cfg::Tables;
@@ -12,17 +11,18 @@ use std::path::PathBuf;
 use std::ptr;
 use std::sync::atomic::{AtomicPtr, Ordering};
 use std::sync::{Arc, OnceLock, RwLock, RwLockReadGuard};
+use crate::config::ConfigSourceType;
 
 static TABLES: ArcSwapOption<Tables> = ArcSwapOption::const_empty();
 
-pub fn load(aws_config: &AwsConfig) {
+pub fn load(aws_config: &ConfigSourceType) {
     tracing::info!("load_config....");
 
     let tables = _load(aws_config);
     TABLES.store(Some(Arc::new(tables)));
 }
 
-pub fn reload(aws_config: &AwsConfig) {
+pub fn reload(aws_config: &ConfigSourceType) {
     tracing::info!("reload....");
     let new_tables = _load(aws_config);
     TABLES.swap(Some(Arc::new(new_tables)));
@@ -32,7 +32,7 @@ pub fn reload(aws_config: &AwsConfig) {
 pub fn get() -> Arc<Tables> {
     TABLES.load().clone().unwrap()
 }
-fn _load(aws_config: &AwsConfig) -> Tables {
+fn _load(aws_config: &ConfigSourceType) -> Tables {
     let tables = Tables::new(|name| {
         let path = PathBuf::from(format!(
             "/home/cc/RustroverProjects/luban_examples/Projects/GenerateDatas/bytes/{}.bytes",
@@ -41,13 +41,4 @@ fn _load(aws_config: &AwsConfig) -> Tables {
         Ok(ByteBuf::new(std::fs::read(path).unwrap()))
     });
     tables.expect("luban err")
-}
-
-#[derive(Debug, Clone, Default)]
-pub struct AwsConfig {
-    pub access_key_id: String,
-    pub secret_access_key: String,
-    pub region: String,
-    pub bucket: String,
-    pub endpoint: String,
 }

@@ -1,0 +1,44 @@
+syntax = "proto3";
+package tower;
+
+import "client/common.proto";
+
+// ====================== 爬塔 ========================
+message SyncTowerDungeonInfoNtf {
+    int32 CheckId         		 = 1; // 关卡ID, 唯一配置ID 所有章节通用
+    int64 LastDayRewardTs 		 = 2; // 下次可以领取每日奖励的时间戳, 超过这个时间就是可以领取(一般是在跨天的0点时间) 可以做领取判定,也可以显示倒计时
+    int64 LastQuestionRewardTs = 3; // 下次可以领取问答的时间戳, 客户端自己控制, 超过这个时间就可以显示 可以做显示时间的计算
+}
+
+// 塔塔副本挑战请求
+message TowerDungeonChallengeReq {
+    int32 CheckId       = 1; // 关卡ID 挑战的ID 必须是同章节下的楼层, 服务器不限制跨度
+}
+
+// 塔塔副本挑战回复
+message TowerDungeonChallengeAck {
+    int32 CheckId       			 				= 1; // 关卡ID 挑战的ID 必须是同章节下的楼层, 服务器不限制跨度
+    bool Result         			 				= 2; // true=成功 false=失败
+    repeated common.ProItemInfo DisplayItems = 3; // 挑战成功获取的道具展示(真实获得根据6224,SyncAllItemPlusNt)
+    repeated common.ProItemInfo UpgradeItems = 4; // 章节晋升的奖励道具展示(真实获得根据6224,SyncAllItemPlusNt)
+}
+
+// 塔塔副本每日奖励领取回复 不需要请求参数
+message TowerDungeonDayRewardAck {
+    int64 LastDayRewardTs = 1; // 同SyncTowerDungeonInfoNtf
+}
+
+// 塔塔副本问答奖励领取请求
+message TowerDungeonQuestionRewardReq {
+    int32 QuestionId = 1; // 问题ID
+    int32 OptId 		 = 2; // 选中的答案ID 如果==配置的正确序号 则领取对应奖励
+}
+
+// 塔塔副本问答奖励领取回复
+message TowerDungeonQuestionRewardAck {
+    int32 QuestionId 						= 1; // 问题ID
+    int32 OptId 								= 2; // 回复请求一样的 可能需要显示
+    int64 LastQuestionRewardTs  = 3; // 同SyncTowerDungeonInfoNtf
+}
+
+// ====================== 爬塔OVER ========================

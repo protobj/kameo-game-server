@@ -7,4 +7,4 @@ edition = "2024"
 ractor = { workspace = true }
 ractor_cluster = { workspace = true }
 crossbeam-utils = { workspace = true }
-config = { path = "../../misc/config" }
+ractor_actors="*"

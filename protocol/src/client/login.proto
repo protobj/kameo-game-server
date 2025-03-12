@@ -1,12 +1,70 @@
 syntax = "proto3";
 package login;
-message LoginReq {
-  string account = 1;
+
+message LoginRequest {
+  int32 session_id = 1;//session id
+  LoginInfo Msg = 2;
 }
-message LoginRsp {
-  UserInfo user_info = 1;
+
+message LoginResponse {
+  int32 code = 1;// 返回值，如果不为OK，这其他所有值无效。
+  Account account = 2;//角色信息
+  bool first_role = 3;// 如果是创建新角色
+  int32 default_server_id = 4;//默认区服ID
+  string sdk_platform = 5;//平台ID
+  int32 role_count = 6;//角色数量
+  int32 origin_server_id =7;//原来的服务器
+  int32 login_state = 8;//登录状态
 }
-message UserInfo {
-  int32 id = 1;// 用户id
-  string name = 2;// 用户名
+
+message Account {
+  int64 user_id = 1;//角色ID
+  string token = 2;
+  bool roll_flag = 3;
+  int32 server_id = 4;
+  int32 register_server_id = 5; //禁止登录
+  string account = 6;
+  int64 register_time = 7;
+  int64 last_login_time = 8;
+  bool new_role = 9;
+  int32 status = 10;
+}
+
+message UserLocalInfo{
+  string IP					= 1;   // IP
+  string CltVersion			= 2;   // 客户端版本号，Build版本号
+  string OsVersion			= 3;   // 客户端Os版本
+  string DeviceName			= 4;   // 设备名称
+  string DeviceID				= 5;   // 设备ID
+  string Locale			= 6;   // 语言, 见宏LANG_XXX
+  string OpenUDID				= 7;   //
+  int32	PlatformID			= 8;   // 客户端设备类型:  宏定义PLATFORM_XXX,
+  int32	Mode				= 9;    //
+  int32 DeviceIDType			= 10;   //
+  int32 ProxyPriority		= 11;	// 登陆所采用加速节点的访问优先级
+  string BundleID				= 12; 	    // 包名
+  string MACAddress 			= 13; 	// MAC地址
+  string NetType 				= 14; 	// 网络类型 wifi/3g/4g
+  string Channel 				= 15; 	// GP
+  string AdvID 				= 16; 	// 广告ID
+  string AndroidID           	= 17;	// 作废 --- 安卓设备的独立识别码,
+  string LocaleCountry		= 18;	// 国家编码
+  string ThirdPartDeviceId	= 19;	// 填appsflyer的appsflyer_device_id
+  int32  IapType 				= 20; 	// 支付渠道
+  bool   IsCN					= 21;	// 是否是国内的包
+  string ResCltVersion        = 22;   // 热更后客户端上的CltVersion不会变，新加一个来区分
+  string UtcOffset			= 23;	// 时间偏移
+  string QQPf 				= 24;   //qq平台用
+  string SDKPlatform = 25;
+  string GameId = 26;
+}
+
+message LoginInfo {
+  int32	AccountType	= 1;
+  string Account    = 2; 		// 帐号信息
+  string Token      = 3;
+  int64	UserID			= 4;
+  UserLocalInfo Local = 5;
+  int32 ServerID 		= 6; 		// 创建角色有用
+  string UserName 	= 7; 		// 角色名字
 }

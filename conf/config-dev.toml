@@ -1,0 +1,30 @@
+[config]
+# bin|json
+type = "bin"
+[config.source_type.aws]
+region = "us-east-1"
+access_key_id = "AKIAIOSFODNN7EXAMPLE"
+secret_access_key = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+endpoint = "http://localhost:4566"
+bucket = "qs001"
+[[login]]
+id = 1
+host = "0.0.0.0"
+port = 30000
+keydb = { host = "localhost", port = 6379, password = "", db = "0", pool_size = 16 }
+
+[[gate]]
+id = 1
+host = "0.0.0.0"
+port = 35000
+out_tcp_port = 5678
+
+[[world]]
+id = 1
+host = "0.0.0.0"
+port = 40000
+
+[[player]]
+id = 1
+host = "0.0.0.0"
+port = 45000

@@ -1,0 +1,22 @@
+[package]
+name = "common"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+redis = { version = "0.29.1", features = ["tokio-comp", "r2d2"] }
+r2d2 = "*"
+anyhow = { workspace = true }
+cfg = { path = "../gen/cfg" }
+aws-config = { version = "1.5.18", features = ["behavior-version-latest"] }
+aws-sdk-dynamodb = "1.67.0"
+ractor = { workspace = true }
+luban_lib = { path = "../luban_lib" }
+crossbeam = "*"
+arc-swap = { workspace = true }
+clap = { workspace = true, features = ["derive"] }
+toml = "*"
+serde = { version = "*", features = ["derive"] }
+tracing-glog = "0.4"
+tracing-subscriber = { workspace = true, features = ["env-filter"] }
+tracing = { workspace = true }

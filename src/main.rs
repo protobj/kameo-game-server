@@ -1,6 +1,4 @@
 use clap::Parser;
-use config::Args;
-use lazy_static::lazy_static;
 use log::trace;
 use ractor::{
     Actor, ActorId, ActorProcessingErr, ActorRef, Message, RpcReplyPort, SupervisionEvent,
@@ -73,11 +71,11 @@ impl Actor for PingPongActor {
 
 #[tokio::main]
 async fn main() {
-    // let args = Args::parse();
+    let args = common::config::Args::parse();
     //
-    ::logging::init_logging(vec!["info".parse().unwrap()]);
+    common::logging::init_logging(vec!["info".parse().unwrap()]);
     // tracing::info!("args:{:?}", args);
-    // tracing::info!("my id {}",config::cluster::get_server_id(&args.role, &args.id));
+    // tracing::info!("my id {}",conf::cluster::get_server_id(&args.role, &args.id));
     let connect_client = Some(9090);
     let cookie = "cookie".to_string();
     let hostname = "localhost".to_string();

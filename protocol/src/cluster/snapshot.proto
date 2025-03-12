@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package snapshot;
+
+message SnapshotContext {
+  string reason = 1;
+  int32 server_id = 2;
+  int64 last_user_id = 3;
+}
+
+message SaveUserRequest {
+  repeated int64 uids = 1;
+  SnapshotContext context = 2;
+}
+
+message SaveUserResponse {
+  int32 code = 1;
+}
+
+message RecoverUserRequest {
+  int64 uid = 1;
+}
+
+message RecoverUserResponse {
+  int64 uid = 1;
+  int32 code = 2;
+}

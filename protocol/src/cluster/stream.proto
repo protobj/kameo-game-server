@@ -1,0 +1,12 @@
+syntax = "proto3";
+package stream;
+
+message StreamRequest {
+  int32 code = 1;
+  bytes data = 2;
+}
+
+message StreamResponse {
+  int32 code = 1;
+  bytes data = 2;
+}
