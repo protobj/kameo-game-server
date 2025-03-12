@@ -17,6 +17,7 @@
       <sourceFolder url="file://$MODULE_DIR$/misc/redis/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/net/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/net/tcp/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/internel/gs/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />

@@ -2,18 +2,130 @@ use clap::Parser;
 use config::Args;
 use lazy_static::lazy_static;
 use log::trace;
-use ractor::{cast, Actor, ActorProcessingErr, ActorRef, Message, SupervisionEvent};
+use prost_types::field::Cardinality::Optional;
+use ractor::{
+    Actor, ActorId, ActorProcessingErr, ActorRef, Message, RpcReplyPort, SupervisionEvent,
+    async_trait, cast,
+};
+use ractor_cluster::node::{NodeConnectionMode, NodeServerSessionInformation};
+use ractor_cluster::{
+    NodeEventSubscription, NodeServer, NodeServerMessage, NodeSession, RactorClusterMessage,
+};
 use std::env;
+use std::thread::sleep;
 use std::time::Duration;
+
+struct PingPongActor;
+
+#[derive(RactorClusterMessage)]
+enum PingPongActorMessage {
+    #[rpc]
+    Rpc(String, RpcReplyPort<String>),
+}
+#[async_trait]
+impl Actor for PingPongActor {
+    type Msg = PingPongActorMessage;
+    type State = ();
+    type Arguments = ();
+
+    async fn pre_start(
+        &self,
+        myself: ActorRef<Self::Msg>,
+        _: (),
+    ) -> Result<Self::State, ActorProcessingErr> {
+        Ok(())
+    }
+
+    async fn handle(
+        &self,
+        _myself: ActorRef<Self::Msg>,
+        message: Self::Msg,
+        _state: &mut Self::State,
+    ) -> Result<(), ActorProcessingErr> {
+        let group = "Login".to_string();
+        // let remote_actors = ActorRef::<Self::Msg>::from(ractor::pg::get_members(&group)[0].clone());
+
+        let actor = ractor::registry::where_is("LoginPingPongActor".to_string());
+
+        // let actorId = remote_actors.get_id();
+        // let name = remote_actors.get_name();
+        match message {
+            Self::Msg::Rpc(request, reply) => {
+                tracing::info!(
+                    "Received an RPC of '{request}' replying in kind to {} remote actors",
+                    1
+                );
+                let reply_msg = format!("{request}.");
+                reply.send(reply_msg.clone())?;
+
+                // let _reply = ractor::call_t!(
+                //     remote_actors,
+                //     PingPongActorMessage::Rpc,
+                //     100,
+                //     reply_msg.clone()
+                // )?;
+                // tracing::info!("reply from {:?} msg:{:?} {:?}", actorId, name, reply_msg);
+            }
+        }
+
+        Ok(())
+    }
+}
 
 #[tokio::main]
 async fn main() {
-    let args = Args::parse();
+    // let args = Args::parse();
+    //
+    ::logging::init_logging(vec!["info".parse().unwrap()]);
+    // tracing::info!("args:{:?}", args);
+    // tracing::info!("my id {}",config::cluster::get_server_id(&args.role, &args.id));
+    let connect_client = Some(9090);
+    let cookie = "cookie".to_string();
+    let hostname = "localhost".to_string();
 
-    ::logging::init_logging(args.log.clone());
-    tracing::info!("args:{:?}", args);
-    tracing::info!("my id {}",config::cluster::get_server_id(&args.role, &args.id));
+    let server =
+        ractor_cluster::NodeServer::new(3030, cookie, "node_a".to_string(), hostname, None, Some(NodeConnectionMode::Transitive));
 
+    let (actor, handle) = Actor::spawn(None, server, ())
+        .await
+        .expect("Failed to start NodeServer A");
+
+    let (test_actor, test_handle) =
+        Actor::spawn(Some("MainPingPongActor".to_string()), PingPongActor, ())
+            .await
+            .expect("Ping pong actor failed to start up!");
+
+    if let Some(cport) = connect_client {
+        if let Err(error) =
+            ractor_cluster::node::client::connect(&actor, format!("127.0.0.1:{cport}")).await
+        {
+            tracing::error!("Failed to connect with error {error}")
+        } else {
+            tracing::info!("Client connected to NdoeServer");
+        }
+    }
+
+    // wait for server startup to complete (and in the event of a client, wait for auth to complete), then startup the test actor
+    ractor::concurrency::sleep(Duration::from_millis(1000)).await;
+    // test_actor.cast(PingPongActorMessage::Ping).unwrap();
+    let _ = test_actor
+        .call(
+            |tx| PingPongActorMessage::Rpc("firstPing".to_string(), tx),
+            Some(Duration::from_millis(50)),
+        )
+        .await
+        .unwrap();
+
+    // wait for exit
+    tokio::signal::ctrl_c()
+        .await
+        .expect("failed to listen for event");
+
+    // cleanup
+    test_actor.stop(None);
+    test_handle.await.unwrap();
+    actor.stop(None);
+    handle.await.unwrap();
 }
 
 //作为服务器的根，管理者角色

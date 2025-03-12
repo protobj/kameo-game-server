@@ -16,34 +16,34 @@ fn find_proto_files(dir: &Path) -> Result<Vec<String>, std::io::Error> {
     Ok(proto_files)
 }
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let proto_dir = Path::new("./pb");
-    let proto_files = find_proto_files(proto_dir)?;
-
-    let out_dir = "gen/proto/src";
-    fs::remove_dir_all(out_dir)?;
-    fs::create_dir_all(out_dir)?;
-    prost_build::Config::new()
-        .out_dir(out_dir)
-        .format(true)
-        .compile_protos(&proto_files, &["./pb"])?;
-    // 2. 生成 mod.rs
-    let mod_path = PathBuf::from(out_dir).join("lib.rs");
-    let mut mod_content = String::new();
-
-    // 扫描生成的 .rs 文件（排除 mod.rs）
-    for entry in fs::read_dir(out_dir).unwrap() {
-        let entry = entry.unwrap();
-        let path = entry.path();
-        if path.is_file()
-            && path.extension().and_then(|s| s.to_str()) == Some("rs")
-            && path.file_name().and_then(|s| s.to_str()) != Some("lib.rs")
-        {
-            if let Some(module_name) = path.file_stem().and_then(|s| s.to_str()) {
-                mod_content.push_str(&format!("pub mod {};\n", module_name));
-            }
-        }
-    }
-    // 写入 mod.rs
-    fs::write(mod_path, mod_content).unwrap();
+    // let proto_dir = Path::new("./pb");
+    // let proto_files = find_proto_files(proto_dir)?;
+    // 
+    // let out_dir = "gen/proto/src";
+    // fs::remove_dir_all(out_dir)?;
+    // fs::create_dir_all(out_dir)?;
+    // prost_build::Config::new()
+    //     .out_dir(out_dir)
+    //     .format(true)
+    //     .compile_protos(&proto_files, &["./pb"])?;
+    // // 2. 生成 mod.rs
+    // let mod_path = PathBuf::from(out_dir).join("lib.rs");
+    // let mut mod_content = String::new();
+    // 
+    // // 扫描生成的 .rs 文件（排除 mod.rs）
+    // for entry in fs::read_dir(out_dir).unwrap() {
+    //     let entry = entry.unwrap();
+    //     let path = entry.path();
+    //     if path.is_file()
+    //         && path.extension().and_then(|s| s.to_str()) == Some("rs")
+    //         && path.file_name().and_then(|s| s.to_str()) != Some("lib.rs")
+    //     {
+    //         if let Some(module_name) = path.file_stem().and_then(|s| s.to_str()) {
+    //             mod_content.push_str(&format!("pub mod {};\n", module_name));
+    //         }
+    //     }
+    // }
+    // // 写入 mod.rs
+    // fs::write(mod_path, mod_content).unwrap();
     Ok(())
 }

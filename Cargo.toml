@@ -17,6 +17,7 @@ edition = "2024"
 
 [dependencies]
 ractor = { workspace = true }
+ractor_cluster = { workspace = true }
 tokio = { workspace = true }
 lazy_static = "1.4.0"
 cfg = { path = "gen/cfg" }
@@ -29,8 +30,7 @@ log = "0.4.26"
 tracing = { workspace = true }
 config = { path = "misc/config" }
 tracing-subscriber = { workspace = true, features = ["env-filter"] }
-clap = { workspace = true, features = ["derive"] }
-
+clap = { workspace = true }
 
 
 [build-dependencies]
@@ -42,9 +42,14 @@ prost-build = "*"
 [workspace.dependencies]
 arc-swap = "*"
 prost = "*"
-tokio = { version = "1.43.0", features = ["full"] }
-tracing = { version = "0.1", features = ["attributes"] }
-ractor = { version = "0.15", features = ["async-trait", "cluster"] }
+tokio = { version = "*", features = ["full"] }
+tracing = { version = "*", features = ["attributes"] }
+tracing-subscriber = { version = "*", features = ["env-filter"] }
+#ractor = { version = "*", features = ["cluster"] }
+#ractor_cluster = "*"
+ractor = { version = "0.13", features = ["cluster"] }
+ractor_cluster = "0.13"
 clap = { version = "*", features = ["derive"] }
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+async-trait = "*"
 anyhow = "*"
+crossbeam-utils = "*"

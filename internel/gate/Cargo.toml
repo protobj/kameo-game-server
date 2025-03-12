@@ -1,6 +1,10 @@
 [package]
-name = "internel-gate"
+name = "gate"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+ractor = { workspace = true }
+ractor_cluster = { workspace = true }
+crossbeam-utils = { workspace = true }
+config = { path = "../../misc/config" }

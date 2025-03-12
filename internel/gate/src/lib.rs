@@ -1,14 +1,24 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
-}
+use crossbeam_utils::sync::WaitGroup;
+use ractor::message::SerializedMessage;
+use ractor::rpc::cast;
+use ractor::{Actor, ActorProcessingErr, ActorRef, Message, async_trait};
+use ractor_cluster::node::{NodeConnectionMode, NodeServerState};
+use ractor_cluster::{NodeServer, NodeServerMessage, RactorMessage};
+//ractor:
+//   消息里可以传递ActorRef,
+//   pg可以将Actor加到组里，发送消息给某一个组
+//   register:
+//        注册pid:集群内可用，任何位置都可以直接拿到actor，并且发送消息给他
+//        注册name:不管是不是集群，只要在进程创建都会注册
+//   actorruntime: 创建一个远程Actor,可以用来发消息，给远端的Actor
+//
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+struct Gate;
+struct GateState;
+struct GateMessage;
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
+impl Message for GateMessage {}
+
+fn gate_main(wait_group: Option<WaitGroup>) {
+    // if let Ok(mut wait_group) = wait_group {}
 }
