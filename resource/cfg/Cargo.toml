@@ -8,4 +8,4 @@ edition = "2021"
 [dependencies]
 bitflags = { version = "2.5.x", features = ["serde"] }
 macros = { path = "../macros" }
-luban_lib = { path = "../../luban_lib" }
+luban_lib = { path = "../luban_lib" }

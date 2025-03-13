@@ -1,10 +1,12 @@
 [workspace]
 members = [
-    "luban_lib",
-    "gen/cfg",
+    "resource/luban_lib",
+    "resource/cfg",
+    "resource/macros",
     "cmd/login",
     "internel/login",
     "internel/gate",
+    "internel/gs",
     "protocol",
     "common",
 ]
@@ -19,8 +21,8 @@ ractor = { workspace = true }
 ractor_cluster = { workspace = true }
 tokio = { workspace = true }
 common = { path = "common" }
-cfg = { path = "gen/cfg" }
-luban_lib = { path = "luban_lib" }
+cfg = { path = "resource/cfg" }
+luban_lib = { path = "resource/luban_lib" }
 
 bytes = "*"
 log = "0.4.26"
@@ -30,8 +32,6 @@ clap = { workspace = true }
 
 
 [build-dependencies]
-
-
 
 
 [workspace.dependencies]
