@@ -1,0 +1,16 @@
+[package]
+name = "servers"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+crossbeam-utils = { workspace = true }
+anyhow = { workspace = true }
+kameo = { version = "*", features = ["remote"] }
+tokio = { workspace = true }
+prost = { workspace = true }
+tokio-stream = "*"
+bytes = "*"
+futures = "*"
+serde = { workspace = true }
+tracing = "0.1.41"

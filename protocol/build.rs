@@ -23,7 +23,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let proto_files = find_proto_files(proto_dir)?;
 
     prost_build::Config::new()
-        .format(true)
+        .bytes(&["."])
         .compile_protos(&proto_files, &[base_dir])?;
     // 2. 生成 mod.rs
     let mod_path = PathBuf::from(base_dir).join("lib.rs");

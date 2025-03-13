@@ -4,11 +4,9 @@ members = [
     "resource/cfg",
     "resource/macros",
     "cmd/login",
-    "internel/login",
-    "internel/gate",
-    "internel/gs",
     "protocol",
     "common",
+    "servers",
 ]
 
 [package]
@@ -22,7 +20,7 @@ common = { path = "common" }
 cfg = { path = "resource/cfg" }
 luban_lib = { path = "resource/luban_lib" }
 
-bytes = "*"
+
 log = "0.4.26"
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true, features = ["env-filter"] }
@@ -37,11 +35,10 @@ arc-swap = "*"
 tokio = { version = "*", features = ["full"] }
 tracing = { version = "*", features = ["attributes"] }
 tracing-subscriber = { version = "*", features = ["env-filter"] }
-#ractor = { version = "0.15", features = ["cluster"] }
-#ractor_cluster = "0.15"
-#ractor_actors = "0.4.9"
 clap = { version = "*", features = ["derive"] }
 anyhow = "*"
 crossbeam-utils = "*"
+bytes = "*"
 prost = "*"
 prost-build = "*"
+serde = "*"

@@ -19,3 +19,5 @@ serde = { version = "*", features = ["derive"] }
 tracing-glog = "0.4"
 tracing-subscriber = { workspace = true, features = ["env-filter"] }
 tracing = { workspace = true }
+prost = {workspace = true}
+bytes = {workspace = true}
