@@ -1,3 +1,4 @@
+use crate::config::ConfigSourceType;
 use arc_swap::{ArcSwap, ArcSwapAny, ArcSwapOption};
 use aws_sdk_dynamodb::config::retry::ShouldAttempt::No;
 use cfg::Tables;
@@ -5,13 +6,11 @@ use crossbeam::atomic::AtomicCell;
 use crossbeam::epoch;
 use crossbeam::epoch::{Atomic, Owned, Shared};
 use luban_lib::ByteBuf;
-use ractor::{ActorProcessingErr, ActorRef, async_trait};
 use std::ops::Deref;
 use std::path::PathBuf;
 use std::ptr;
 use std::sync::atomic::{AtomicPtr, Ordering};
 use std::sync::{Arc, OnceLock, RwLock, RwLockReadGuard};
-use crate::config::ConfigSourceType;
 
 static TABLES: ArcSwapOption<Tables> = ArcSwapOption::const_empty();
 

@@ -4,7 +4,10 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-ractor = { workspace = true }
-ractor_cluster = { workspace = true }
 crossbeam-utils = { workspace = true }
-ractor_actors="*"
+ractor_actors = "0.4.9"
+ractor = { version = "0.15", features = ["async-trait"] }
+tokio = { workspace = true }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+bytes = "1.10.1"

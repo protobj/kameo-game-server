@@ -10,7 +10,6 @@ anyhow = { workspace = true }
 cfg = { path = "../resource/cfg" }
 aws-config = { version = "1.5.18", features = ["behavior-version-latest"] }
 aws-sdk-dynamodb = "1.67.0"
-ractor = { workspace = true }
 luban_lib = { path = "../resource/luban_lib" }
 crossbeam = "*"
 arc-swap = { workspace = true }

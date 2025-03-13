@@ -5,6 +5,3 @@ edition = "2024"
 
 [dependencies]
 crossbeam-utils = { workspace = true }
-
-ractor = { workspace = true }
-ractor_cluster = { workspace = true }

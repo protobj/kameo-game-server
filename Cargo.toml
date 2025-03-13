@@ -17,8 +17,6 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-ractor = { workspace = true }
-ractor_cluster = { workspace = true }
 tokio = { workspace = true }
 common = { path = "common" }
 cfg = { path = "resource/cfg" }
@@ -39,8 +37,9 @@ arc-swap = "*"
 tokio = { version = "*", features = ["full"] }
 tracing = { version = "*", features = ["attributes"] }
 tracing-subscriber = { version = "*", features = ["env-filter"] }
-ractor = { version = "0.13", features = ["cluster"] }
-ractor_cluster = "0.13"
+#ractor = { version = "0.15", features = ["cluster"] }
+#ractor_cluster = "0.15"
+#ractor_actors = "0.4.9"
 clap = { version = "*", features = ["derive"] }
 anyhow = "*"
 crossbeam-utils = "*"
