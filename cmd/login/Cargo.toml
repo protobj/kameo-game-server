@@ -5,3 +5,11 @@ edition = "2024"
 
 [dependencies]
 tokio = { workspace = true }
+async-trait = { workspace = true }
+common = { path = "../../common" }
+kameo = { workspace = true }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true, features = ["env-filter"] }
+libp2p = { workspace = true }
+#libp2p-quic = { workspace = true }

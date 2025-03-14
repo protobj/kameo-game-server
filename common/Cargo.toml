@@ -19,7 +19,7 @@ serde = { version = "*", features = ["derive"] }
 tracing-glog = "0.4"
 tracing-subscriber = { workspace = true, features = ["env-filter"] }
 tracing = { workspace = true }
-prost = {workspace = true}
-bytes = {workspace = true}
+bytes = { workspace = true }
 tokio = "1.44.0"
-kameo = { version = "*", features = ["remote"] }
+kameo = { workspace = true }
+async-trait = { workspace = true }

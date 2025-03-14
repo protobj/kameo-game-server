@@ -1,50 +1,28 @@
-mod tcp;
+pub mod tcp;
 
-use crate::network::tcp::start_tcp_server;
+use crate::network::tcp::session::TcpConnectionActor;
 use bytes::Bytes;
-use std::net::SocketAddr;
-use kameo::message::{Context, Message};
-use serde::{Deserialize, Serialize};
-use tokio::net::TcpStream;
-use tokio::sync::mpsc::channel;
+use kameo::actor::ActorRef;
 
 pub struct LogicMessage {
-    pub ix: usize,
+    pub ix: u32,
     pub cmd: u16,
     pub bytes: Bytes,
 }
 
-#[derive(Serialize,Deserialize)]
 pub enum NetMessage {
     Read(LogicMessage),
-    Connected(TcpStream, SocketAddr),
-    Err,
     Close,
 }
+#[async_trait::async_trait]
+pub trait MessageHandler: Send + Sync + 'static {
+    async fn handle(
+        &self,
+        actor_ref: &ActorRef<TcpConnectionActor>,
+        message: NetMessage,
+    ) -> anyhow::Result<()>;
+}
 
-fn start_gate_server() {
-    let (tx, mut rx) = channel::<NetMessage>(100);
-
-    tokio::spawn(async move { start_tcp_server("0.0.0.0", 2322, tx) });
-
-    tokio::select! {
-       val = rx.recv() => {
-            if let Some(msg) =val{
-                match msg{
-                    NetMessage::Msg(msg)=>{
-                        println!("msg:{}",msg.ix);
-                    },
-                    NetMessage::Connected(stream,addr)=>{
-                        println!("connected:{}",addr);
-                    },
-                    NetMessage::Err=>{
-                        println!("err");
-                    },
-                    NetMessage::Close=>{
-                        println!("close");
-                    },
-                }
-            }
-       }
-    }
+pub trait MessageHandlerFactory: Send + Sync + 'static + Sized {
+    fn create_handler(&self) -> Box<dyn MessageHandler + Send + Sync>;
 }

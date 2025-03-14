@@ -25,8 +25,12 @@ log = "0.4.26"
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true, features = ["env-filter"] }
 clap = { workspace = true }
-
-
+anyhow = "1.0.97"
+kameo = { workspace = true }
+async-trait = { workspace = true }
+bytes = "1.10.1"
+libp2p = { workspace = true }
+#libp2p-quic = { workspace = true }
 [build-dependencies]
 
 
@@ -42,3 +46,7 @@ bytes = "*"
 prost = "*"
 prost-build = "*"
 serde = "*"
+async-trait = "*"
+kameo = { version = "0.15.0", features = ["remote"] }
+libp2p = { version = "0.55.0", features = ["cbor", "dns", "kad", "mdns", "macros", "quic", "request-response", "rsa", "serde", "tokio"]}
+libp2p-identity = { version = "0.2.9", features = ["rand", "rsa"] }
