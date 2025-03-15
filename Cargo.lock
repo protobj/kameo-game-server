@@ -227,9 +227,9 @@ dependencies = [
 
 [[package]]
 name = "async-trait"
-version = "0.1.87"
+version = "0.1.88"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d556ec1359574147ec0c4fc5eb525f3f23263a592b1a9c07e0a75b427de55c97"
+checksum = "e539d3fca749fcee5236ab05e93a52867dd549cc157c8cb7f99595f3cedffdb5"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -326,9 +326,9 @@ dependencies = [
 
 [[package]]
 name = "aws-lc-sys"
-version = "0.27.0"
+version = "0.27.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6bbe221bbf523b625a4dd8585c7f38166e31167ec2ca98051dbcb4c3b6e825d2"
+checksum = "77926887776171ced7d662120a75998e444d3750c951abfe07f90da130514b1f"
 dependencies = [
  "bindgen",
  "cc",
@@ -2625,7 +2625,7 @@ dependencies = [
  "async-trait",
  "common",
  "kameo",
- "libp2p",
+ "servers",
  "tokio",
  "tracing",
  "tracing-subscriber",
@@ -3220,9 +3220,9 @@ dependencies = [
  "clap",
  "common",
  "kameo",
- "libp2p",
  "log",
  "luban_lib",
+ "servers",
  "tokio",
  "tracing",
  "tracing-subscriber",
@@ -3833,12 +3833,14 @@ name = "servers"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "async-trait",
  "bytes",
  "crossbeam-utils",
  "futures",
  "kameo",
  "prost",
  "serde",
+ "thiserror 1.0.69",
  "tokio",
  "tokio-stream",
  "tracing",

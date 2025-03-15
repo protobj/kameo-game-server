@@ -1,6 +1,6 @@
-mod login;
-mod gate;
+pub mod gate;
 mod gs;
+mod login;
 
 pub fn add(left: u64, right: u64) -> u64 {
     left + right

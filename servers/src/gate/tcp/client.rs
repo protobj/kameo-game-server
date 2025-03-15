@@ -1,48 +1,28 @@
-use crate::network::tcp::session::{
-    TcpConnectionActor, TcpConnectionConnectedMessage, TcpConnectionMessage,
-};
-use crate::network::{LogicMessage, MessageHandlerFactory};
+use crate::gate::tcp::session::{TcpSessionActor, TcpSessionConnectedMessage, TcpSessionMessage};
+use crate::gate::{HandleFn, LogicMessage};
 use kameo::actor::{ActorRef, WeakActorRef};
 use kameo::error::{ActorStopReason, PanicError};
 use kameo::mailbox::unbounded::UnboundedMailbox;
-use kameo::{Actor, messages};
+use kameo::{messages, Actor};
 use std::ops::ControlFlow;
 use tokio::net::TcpStream;
 
 pub struct TcpClientActor {
     addr: String,
-    client: Option<TcpStream>,
-    message_handler_factory: Box<dyn MessageHandlerFactory>,
-    client_ref: Option<ActorRef<TcpConnectionActor>>,
+    client_ref: Option<ActorRef<TcpSessionActor>>,
+    handle_fn: HandleFn,
 }
 
 impl TcpClientActor {
-    pub fn new(addr: String, message_handler_factory: Box<dyn MessageHandlerFactory>) -> Self {
+    pub fn new(addr: String, handle_fn: HandleFn) -> Self {
         Self {
+            handle_fn,
             addr,
-            client: None,
-            message_handler_factory,
             client_ref: None,
         }
     }
 }
-#[messages]
-impl TcpClientActor {
-    #[message]
-    pub async fn connect(&mut self) -> bool {
-        match self.client_ref {
-            None => false,
-            Some(_) => true,
-        }
-    }
-    #[message]
-    pub async fn client_send(&mut self, message: LogicMessage) -> anyhow::Result<()> {
-        if let Some(client) = self.client_ref.as_ref() {
-            client.tell(TcpConnectionMessage::Send(message)).await?;
-        }
-        Ok(())
-    }
-}
+
 impl Actor for TcpClientActor {
     type Mailbox = UnboundedMailbox<TcpClientActor>;
     type Error = anyhow::Error;
@@ -50,15 +30,11 @@ impl Actor for TcpClientActor {
     async fn on_start(&mut self, actor_ref: ActorRef<Self>) -> Result<(), Self::Error> {
         let client = TcpStream::connect(self.addr.as_str()).await?;
         tracing::info!("Tcp:connected connection: {}", self.addr);
-        let connection_actor_ref = kameo::actor::spawn_link(
-            &actor_ref,
-            TcpConnectionActor::new(self.message_handler_factory.create_handler()),
-        )
-        .await;
+        let connection_actor_ref =
+            kameo::actor::spawn_link(&actor_ref, TcpSessionActor::new(self.handle_fn)).await;
         connection_actor_ref
-            .tell(TcpConnectionConnectedMessage { stream: client })
-            .await
-            .expect("error handling connection");
+            .tell(TcpSessionConnectedMessage { stream: client })
+            .await?;
         self.client_ref = Some(connection_actor_ref);
         Ok(())
     }
@@ -79,6 +55,23 @@ impl Actor for TcpClientActor {
     ) -> Result<(), Self::Error> {
         tracing::info!("tcp:connected panic: {:?}", reason);
         drop(self.client_ref.take());
+        Ok(())
+    }
+}
+#[messages]
+impl TcpClientActor {
+    #[message]
+    pub async fn connect(&mut self) -> bool {
+        match self.client_ref {
+            None => false,
+            Some(_) => true,
+        }
+    }
+    #[message]
+    pub async fn client_send(&mut self, message: LogicMessage) -> anyhow::Result<()> {
+        if let Some(client) = self.client_ref.as_ref() {
+            client.tell(TcpSessionMessage::Send(message)).await?;
+        }
         Ok(())
     }
 }

@@ -1,26 +1,25 @@
-use crate::network::MessageHandlerFactory;
-use crate::network::tcp::session::{TcpConnectionActor, TcpConnectionConnectedMessage};
-use kameo::Actor;
+use crate::gate::tcp::session::{TcpSessionActor, TcpSessionConnectedMessage};
+use crate::gate::HandleFn;
 use kameo::actor::{ActorRef, WeakActorRef};
-use kameo::error::{ActorStopReason};
-use kameo::mailbox::bounded::BoundedMailbox;
+use kameo::error::ActorStopReason;
 use kameo::mailbox::unbounded::UnboundedMailbox;
 use kameo::message::{Context, Message};
+use kameo::Actor;
 use tokio::net::TcpListener;
 
 // 定义一个主服务器 Actor 来监听 TCP 连接
 pub struct TcpServerActor {
     addr: String,
     listener: Option<TcpListener>,
-    message_handler_factory: Box<dyn MessageHandlerFactory>,
+    handle_fn: HandleFn,
 }
 
 impl TcpServerActor {
-    pub fn new(addr: String, session_factory: Box<dyn MessageHandlerFactory>) -> Self {
+    pub fn new(addr: String, handle_fn: HandleFn) -> Self {
         Self {
+            handle_fn,
             addr,
             listener: None,
-            message_handler_factory: session_factory,
         }
     }
 }
@@ -37,12 +36,11 @@ impl Actor for TcpServerActor {
         Ok(())
     }
 
-
     async fn on_stop(
         &mut self,
         _actor_ref: WeakActorRef<Self>,
         reason: ActorStopReason,
-    ) -> Result<(),  Self::Error> {
+    ) -> Result<(), Self::Error> {
         tracing::trace!("Tcp server stopping: {:?}", reason);
         drop(self.listener.take());
         Ok(())
@@ -65,11 +63,11 @@ impl Message<TcpServerListenMessage> for TcpServerActor {
                     tracing::info!("Tcp:Accepted connection from: {}", addr);
                     let actor_ref = kameo::actor::spawn_link(
                         &ctx.actor_ref(),
-                        TcpConnectionActor::new(self.message_handler_factory.create_handler()),
+                        TcpSessionActor::new(self.handle_fn),
                     )
                     .await;
                     actor_ref
-                        .tell(TcpConnectionConnectedMessage { stream })
+                        .tell(TcpSessionConnectedMessage { stream })
                         .await
                         .expect("error handling connection");
                 }
