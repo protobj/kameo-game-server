@@ -1,0 +1,15 @@
+[package]
+name = "net"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tracing = { workspace = true }
+tokio = { workspace = true }
+thiserror = { workspace = true }
+kameo = { workspace = true }
+anyhow = { workspace = true }
+bytes = { workspace = true }
+tokio-util = { workspace = true }
+message-io = { workspace = true }
+log = "0.4.26"

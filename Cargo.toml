@@ -6,7 +6,7 @@ members = [
     "cmd/login",
     "protocol",
     "common",
-    "servers",
+    "servers", "net",
 ]
 
 [package]
@@ -17,7 +17,7 @@ edition = "2024"
 [dependencies]
 tokio = { workspace = true }
 common = { path = "common" }
-servers = {path = "servers"}
+servers = { path = "servers" }
 cfg = { path = "resource/cfg" }
 luban_lib = { path = "resource/luban_lib" }
 
@@ -30,6 +30,8 @@ anyhow = "1.0.97"
 kameo = { workspace = true }
 async-trait = { workspace = true }
 bytes = "1.10.1"
+
+net ={path = "net"}
 [build-dependencies]
 
 
@@ -48,3 +50,5 @@ serde = "*"
 async-trait = "*"
 kameo = { version = "0.15.0", features = ["remote"] }
 thiserror = "*"
+tokio-util = { version = "*", features = ["full"] }
+message-io = { version = "*" }

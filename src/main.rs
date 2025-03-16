@@ -2,11 +2,11 @@ use bytes::Bytes;
 use kameo::actor::ActorRef;
 use kameo::remote::dial_opts::DialOpts;
 use kameo::remote::ActorSwarm;
-use servers::gate::tcp::client::{ClientSend, Connect, TcpClientActor};
-use servers::gate::tcp::session::TcpSessionActor;
 use servers::gate::{LogicMessage, NetMessage};
-use std::pin::Pin;
+use std::{pin::Pin, time::Duration};
+use kameo::actor;
 use tracing_subscriber::EnvFilter;
+use net::tcp::{client::NetClientActor, listener::NetServerActor};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -25,51 +25,18 @@ async fn main() -> anyhow::Result<()> {
                 .build(),
         )
         .await?;
-    fn handle(
-        actor_ref: ActorRef<TcpSessionActor>,
-        net_message: NetMessage,
-    ) -> Pin<Box<dyn Future<Output = ()> + Send>> {
-        match net_message {
-            NetMessage::Read(message) => {
-                println!(
-                    "recv ix:{} cmd:{} bytes:{}",
-                    message.ix,
-                    message.cmd,
-                    String::from_utf8_lossy(&message.bytes)
-                );
-            }
-            NetMessage::Close => {
-                actor_ref.kill();
-            }
-        }
-        Box::pin(async move {})
-    }
+    let actor = NetServerActor::new();
 
-    let tcp_actor = TcpClientActor::new("0.0.0.0:4567".to_string(), handle);
-    let tcp_actor_ref = kameo::spawn(tcp_actor);
+    let actor_ref = actor::spawn(actor);
 
-    loop {
-        if tcp_actor_ref.ask(Connect).await? {
-            break;
-        }
-        tokio::time::sleep(std::time::Duration::from_secs(1)).await;
-    }
 
-    for i in 0..1 {
-        let logic_message = LogicMessage {
-            ix: 1,
-            cmd: 1,
-            bytes: Bytes::from("hello world"),
-        };
-        tcp_actor_ref
-            .tell(ClientSend {
-                message: logic_message,
-            })
-            .await
-            .expect("error sending logic message");
-    }
 
-    tokio::time::sleep(std::time::Duration::from_secs(5)).await;
+    tokio::time::sleep(Duration::from_secs(1));
+
+    actor::spawn(NetClientActor::new());
+
+
+    tokio::signal::ctrl_c().await?;
 
     Ok(())
 }
