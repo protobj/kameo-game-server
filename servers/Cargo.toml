@@ -16,4 +16,4 @@ serde = { workspace = true }
 tracing = "0.1.41"
 async-trait = "0.1.87"
 thiserror = { workspace = true }
-message-io = { workspace = true }
+tokio-rustls = { workspace = true }

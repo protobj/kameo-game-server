@@ -1,5 +1,4 @@
-use bytes::{Buf, BufMut, Bytes, BytesMut};
-use message_io::network::Endpoint;
+use bytes::{BufMut, Bytes, BytesMut};
 
 #[derive(Debug)]
 pub struct LogicMessage {
@@ -26,12 +25,4 @@ impl LogicMessage {
         buffer.extend_from_slice(&self.bytes);
         buffer.freeze()
     }
-}
-
-pub enum GateServerMessage {
-    Connected(Endpoint),
-    MessageRead(Endpoint, LogicMessage),
-    Accepted(Endpoint),
-    Disconnected(Endpoint),
-    MessageWrite(Endpoint, LogicMessage),
 }

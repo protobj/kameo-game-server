@@ -1,14 +1,12 @@
 use std::pin::Pin;
 use anyhow::Ok;
 use kameo::actor::ActorRef;
-use kameo::remote::ActorSwarm;
 use tracing_subscriber::EnvFilter;
-use servers::gate::NetMessage;
 // use servers::gate::tcp::listener::TcpServerActor;
 // use servers::gate::tcp::session::{TcpSessionActor, TcpSessionMessage};
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt()
         .with_env_filter("info".parse::<EnvFilter>()?)
         .without_time()

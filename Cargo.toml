@@ -30,7 +30,6 @@ anyhow = "1.0.97"
 kameo = { workspace = true }
 async-trait = { workspace = true }
 bytes = "1.10.1"
-
 [build-dependencies]
 
 
@@ -49,5 +48,4 @@ serde = "*"
 async-trait = "*"
 kameo = { version = "0.15.0" }
 thiserror = "*"
-tokio-util = { version = "*", features = ["full"] }
-message-io = { version = "*" }
+tokio-rustls = "*"
