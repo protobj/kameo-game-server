@@ -6,7 +6,7 @@ members = [
     "cmd/login",
     "protocol",
     "common",
-    "servers", "net",
+    "servers",
 ]
 
 [package]
@@ -31,7 +31,6 @@ kameo = { workspace = true }
 async-trait = { workspace = true }
 bytes = "1.10.1"
 
-net ={path = "net"}
 [build-dependencies]
 
 
@@ -48,7 +47,7 @@ prost = "*"
 prost-build = "*"
 serde = "*"
 async-trait = "*"
-kameo = { version = "0.15.0", features = ["remote"] }
+kameo = { version = "0.15.0" }
 thiserror = "*"
 tokio-util = { version = "*", features = ["full"] }
 message-io = { version = "*" }
