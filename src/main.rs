@@ -3,14 +3,16 @@ use kameo::actor;
 use kameo::actor::ActorRef;
 // use kameo::remote::ActorSwarm;
 // use kameo::remote::dial_opts::DialOpts;
+use futures_util::StreamExt;
+use network::tcp::listener::Listener;
+use network::tcp::message::LogicMessage;
 use servers::gate::tcp::session::Session;
+use std::ptr::read;
 use std::{pin::Pin, time::Duration};
 use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader};
 use tokio::net::TcpStream;
 use tokio::sync::mpsc;
 use tracing_subscriber::EnvFilter;
-use network::tcp::listener::Listener;
-use network::tcp::message::LogicMessage;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -38,10 +40,14 @@ async fn main() -> anyhow::Result<()> {
 
     // });
 
-    let server_ref = kameo::spawn(Listener::new(
-        3456,
-        move |stream| async move { Ok(kameo::spawn(Session::new(stream))) },
-    ));
+    let server_ref = kameo::spawn(Listener::new(3456, move |stream| async move {
+        let wstream = tokio_tungstenite::accept_async(stream.stream).await?;
+        // let (writer,mut reader) = wstream.split();
+        // let message  = reader.next().await.unwrap().unwrap();
+        // message
+        // wstream.
+        Ok(kameo::spawn(Session::new(stream)))
+    }));
     server_ref.wait_startup().await;
     // tokio::signal::ctrl_c().await?;
     let stream = TcpStream::connect("127.0.0.1:3456").await?;

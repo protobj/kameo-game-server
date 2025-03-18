@@ -23,8 +23,8 @@ network = {path = "network"}
 servers = { path = "servers" }
 cfg = { path = "resource/cfg" }
 luban_lib = { path = "resource/luban_lib" }
-
-
+tokio-tungstenite = "*"
+futures-util = { version = "0.3.28", default-features = false, features = ["sink", "std"] }
 log = "0.4.26"
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true, features = ["env-filter"] }
@@ -51,4 +51,3 @@ serde = "*"
 async-trait = "*"
 kameo = { version = "0.15.0" }
 thiserror = "*"
-tokio-rustls = "*"
