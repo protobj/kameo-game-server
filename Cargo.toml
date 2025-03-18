@@ -6,7 +6,7 @@ members = [
     "cmd/login",
     "protocol",
     "common",
-    "servers",
+    "servers", "network",
 ]
 
 [package]
@@ -16,7 +16,10 @@ edition = "2024"
 
 [dependencies]
 tokio = { workspace = true }
+
+
 common = { path = "common" }
+network = {path = "network"}
 servers = { path = "servers" }
 cfg = { path = "resource/cfg" }
 luban_lib = { path = "resource/luban_lib" }

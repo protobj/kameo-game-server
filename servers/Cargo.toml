@@ -9,11 +9,10 @@ anyhow = { workspace = true }
 kameo = { version = "*" }
 tokio = { workspace = true }
 prost = { workspace = true }
-tokio-stream = "*"
 bytes = "*"
 futures = "*"
 serde = { workspace = true }
 tracing = "0.1.41"
 async-trait = "0.1.87"
 thiserror = { workspace = true }
-tokio-rustls = { workspace = true }
+network = {path = "../network"}
