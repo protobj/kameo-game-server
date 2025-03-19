@@ -27,6 +27,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "allinone"
+version = "0.1.0"
+
+[[package]]
 name = "android-tzdata"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -102,17 +106,6 @@ name = "arc-swap"
 version = "1.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "69f7f8c3906b62b754cd5326047894316021dcfe5a194c8ea52bdd94934a3457"
-
-[[package]]
-name = "async-trait"
-version = "0.1.88"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e539d3fca749fcee5236ab05e93a52867dd549cc157c8cb7f99595f3cedffdb5"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
-]
 
 [[package]]
 name = "atomic-waker"
@@ -1046,6 +1039,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "game"
+version = "0.1.0"
+
+[[package]]
+name = "gate"
+version = "0.1.0"
+
+[[package]]
 name = "generic-array"
 version = "0.14.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1645,16 +1646,6 @@ checksum = "30bde2b3dc3671ae49d8e2e9f044c7c005836e7a023ee57cffa25ab82764bb9e"
 [[package]]
 name = "login"
 version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "common",
- "kameo",
- "servers",
- "tokio",
- "tracing",
- "tracing-subscriber",
-]
 
 [[package]]
 name = "luban_lib"
@@ -1959,28 +1950,6 @@ version = "0.1.0"
 dependencies = [
  "prost",
  "prost-build",
-]
-
-[[package]]
-name = "qs001-server"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "bytes",
- "cfg",
- "clap",
- "common",
- "futures-util",
- "kameo",
- "log",
- "luban_lib",
- "network",
- "servers",
- "tokio",
- "tokio-tungstenite",
- "tracing",
- "tracing-subscriber",
 ]
 
 [[package]]
@@ -2381,22 +2350,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "servers"
+name = "service"
 version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "bytes",
- "crossbeam-utils",
- "futures",
- "kameo",
- "network",
- "prost",
- "serde",
- "thiserror",
- "tokio",
- "tracing",
-]
 
 [[package]]
 name = "sha1"
@@ -3153,6 +3108,10 @@ checksum = "3268f3d866458b787f390cf61f4bbb563b922d091359f9608842999eaee3943c"
 dependencies = [
  "bitflags",
 ]
+
+[[package]]
+name = "world"
+version = "0.1.0"
 
 [[package]]
 name = "write16"

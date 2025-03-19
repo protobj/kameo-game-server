@@ -3,39 +3,11 @@ members = [
     "resource/luban_lib",
     "resource/cfg",
     "resource/macros",
-    "cmd/login",
     "protocol",
     "common",
-    "servers", "network",
+    "network",
+    "lib", "bin/game", "bin/gate", "bin/login", "bin/world", "bin/allinone",
 ]
-
-[package]
-name = "qs001-server"
-version = "0.1.0"
-edition = "2024"
-
-[dependencies]
-tokio = { workspace = true }
-
-
-common = { path = "common" }
-network = {path = "network"}
-servers = { path = "servers" }
-cfg = { path = "resource/cfg" }
-luban_lib = { path = "resource/luban_lib" }
-tokio-tungstenite = "*"
-futures-util = { version = "0.3.28", default-features = false, features = ["sink", "std"] }
-log = "0.4.26"
-tracing = { workspace = true }
-tracing-subscriber = { workspace = true, features = ["env-filter"] }
-clap = { workspace = true }
-anyhow = "1.0.97"
-kameo = { workspace = true }
-async-trait = { workspace = true }
-bytes = "1.10.1"
-[build-dependencies]
-
-
 [workspace.dependencies]
 arc-swap = "*"
 tokio = { version = "*", features = ["full"] }
