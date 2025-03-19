@@ -6,7 +6,7 @@ use kameo::mailbox::unbounded::UnboundedMailbox;
 use kameo::message::{Context, Message};
 use std::io::ErrorKind;
 use std::net::SocketAddr;
-use tokio::io::AsyncReadExt;
+use tokio::io::{AsyncReadExt, AsyncWriteExt, BufReader, BufWriter};
 use tokio::net::TcpStream;
 use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
 use tokio::task::JoinHandle;
@@ -91,14 +91,14 @@ where
     T: Actor + Message<SessionMessage>,
 {
     session_ref: ActorRef<T>,
-    reader: Option<OwnedReadHalf>,
+    reader: Option<BufReader<OwnedReadHalf>>,
     join_handle: Option<JoinHandle<()>>,
 }
 impl<T: Actor + Message<SessionMessage>> Reader<T> {
     pub fn new(session_ref: ActorRef<T>, reader: OwnedReadHalf) -> Self {
         Self {
             session_ref,
-            reader: Some(reader),
+            reader: Some(BufReader::new(reader)),
             join_handle: None,
         }
     }
@@ -110,7 +110,6 @@ impl<T: Actor + Message<SessionMessage>> Actor for Reader<T> {
 
     async fn on_start(&mut self, actor_ref: ActorRef<Self>) -> Result<(), Self::Error> {
         let mut read_half = self.reader.take().unwrap();
-        // actor_ref.tell(ReaderMessage::WaitFor).await?;
         let session_ref = self.session_ref.clone();
         let handle = tokio::task::spawn(async move {
             loop {
@@ -169,11 +168,13 @@ impl<T: Actor + Message<SessionMessage>> Actor for Reader<T> {
 }
 
 struct Writer {
-    writer: OwnedWriteHalf,
+    writer: BufWriter<OwnedWriteHalf>,
 }
 impl Writer {
     pub fn new(writer: OwnedWriteHalf) -> Self {
-        Self { writer }
+        Self {
+            writer: BufWriter::new(writer),
+        }
     }
 }
 impl Actor for Writer {
@@ -190,8 +191,6 @@ impl Message<Write> for Writer {
 
         let bytes = LogicMessage::to_bytes(&message);
         let stream = &mut self.writer;
-        stream.writable().await?;
-        use tokio::io::AsyncWriteExt;
         if let Err(write_err) = stream.write_u32(bytes.len() as u32).await {
             tracing::warn!("Error writing to the stream '{}'", write_err);
         } else {
@@ -210,12 +209,11 @@ impl Message<Write> for Writer {
     }
 }
 async fn read_n_bytes(
-    read_half: &mut OwnedReadHalf,
+    read_half: &mut BufReader<OwnedReadHalf>,
     len: usize,
 ) -> Result<Vec<u8>, tokio::io::Error> {
     let mut buf = vec![0u8; len];
     let mut c_len = 0;
-    read_half.readable().await?;
     while c_len < len {
         let n = read_half.read(buf.as_mut_slice()).await?;
         if n == 0 {
