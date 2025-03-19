@@ -3,6 +3,15 @@ name = "network"
 version = "0.1.0"
 edition = "2024"
 
+[[example]]
+name = "tcp"
+path = "examples/tcp.rs"
+
+
+[[example]]
+name = "websocket"
+path = "examples/websocket.rs"
+
 [dependencies]
 anyhow = { workspace = true }
 kameo = { version = "*" }

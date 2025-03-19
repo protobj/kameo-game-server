@@ -1,5 +1,4 @@
-use crate::tcp::session::SessionMessage;
-use crate::tcp::stream::{NetworkPort, NetworkStream};
+use crate::{NetworkPort, NetworkStreamInfo, SessionMessage};
 use kameo::Actor;
 use kameo::actor::{ActorRef, WeakActorRef};
 use kameo::error::ActorStopReason;
@@ -7,7 +6,7 @@ use kameo::mailbox::unbounded::UnboundedMailbox;
 use kameo::message::Message;
 use std::pin::Pin;
 use std::sync::Arc;
-use tokio::net::TcpListener;
+use tokio::net::{TcpListener, TcpStream};
 use tokio::task::JoinHandle;
 
 pub struct Listener<T>
@@ -18,7 +17,8 @@ where
     join_handle: Option<JoinHandle<()>>,
     connection_handler: Arc<
         dyn Fn(
-                NetworkStream,
+                NetworkStreamInfo,
+                TcpStream,
             )
                 -> Pin<Box<dyn Future<Output = Result<ActorRef<T>, anyhow::Error>> + Send>>
             + Send
@@ -29,13 +29,15 @@ where
 impl<T: Actor + Message<SessionMessage>> Listener<T> {
     pub fn new<F, Fut>(port: NetworkPort, connection_handler: F) -> Self
     where
-        F: Fn(NetworkStream) -> Fut + Send + Sync + 'static,
+        F: Fn(NetworkStreamInfo, TcpStream) -> Fut + Send + Sync + 'static,
         Fut: Future<Output = Result<ActorRef<T>, anyhow::Error>> + Send + 'static,
     {
         Self {
             port,
             join_handle: None,
-            connection_handler: Arc::new(move |stream| Box::pin(connection_handler(stream))),
+            connection_handler: Arc::new(move |network_stream_info, stream| {
+                Box::pin(connection_handler(network_stream_info, stream))
+            }),
         }
     }
 }
@@ -60,16 +62,15 @@ impl<T: Actor + Message<SessionMessage>> Actor for Listener<T> {
                 match listener.accept().await {
                     Ok((stream, addr)) => {
                         let local = stream.local_addr().unwrap();
-                        let network_stream = NetworkStream {
+                        let network_stream_info = NetworkStreamInfo {
                             peer_addr: addr,
                             local_addr: local,
-                            stream,
                         };
                         tracing::info!("TCP Session opened for {addr}");
                         let server_actor_ref = actor_ref.clone();
                         let connection_handler = out_connection_handler.clone();
                         tokio::spawn(async move {
-                            match (connection_handler)(network_stream).await {
+                            match (connection_handler)(network_stream_info, stream).await {
                                 Ok(actor_ref) => server_actor_ref.link(&actor_ref).await,
                                 Err(err) => {
                                     tracing::warn!("Connection handler failed session: {err}");

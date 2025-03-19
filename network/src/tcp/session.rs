@@ -1,27 +1,101 @@
-use crate::tcp::message::LogicMessage;
-use crate::tcp::stream::{NetworkStream, ReaderHalf, WriterHalf};
+use crate::{LogicMessage, MessageHandler, NetworkStreamInfo, SessionMessage};
 use kameo::Actor;
 use kameo::actor::{ActorRef, WeakActorRef};
 use kameo::error::ActorStopReason;
 use kameo::mailbox::unbounded::UnboundedMailbox;
 use kameo::message::{Context, Message};
 use std::io::ErrorKind;
+use std::net::SocketAddr;
+use tokio::io::AsyncReadExt;
+use tokio::net::TcpStream;
+use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
 use tokio::task::JoinHandle;
 
-pub enum SessionMessage {
-    Write(LogicMessage),
-    Read(LogicMessage),
+pub struct TcpSession<H>
+where
+    H: MessageHandler<Session = Self>,
+{
+    network_stream_info: NetworkStreamInfo,
+    network_stream: Option<TcpStream>,
+    writer: Option<ActorRef<Writer>>,
+    reader: Option<ActorRef<Reader<Self>>>,
+    message_handler: H,
 }
-pub struct Reader<T>
+
+impl<H> TcpSession<H>
+where
+    H: MessageHandler<Session = Self>,
+{
+    pub fn new(
+        network_stream_info: NetworkStreamInfo,
+        network_stream: TcpStream,
+        message_handler: H,
+    ) -> Self {
+        Self {
+            network_stream_info,
+            network_stream: Some(network_stream),
+            writer: None,
+            reader: None,
+            message_handler,
+        }
+    }
+
+    pub fn local_addr(&self) -> SocketAddr {
+        self.network_stream_info.local_addr
+    }
+    pub fn peer_addr(&self) -> SocketAddr {
+        self.network_stream_info.peer_addr
+    }
+}
+impl<T: MessageHandler<Session = Self>> Actor for TcpSession<T> {
+    type Mailbox = UnboundedMailbox<Self>;
+    type Error = anyhow::Error;
+
+    async fn on_start(&mut self, actor_ref: ActorRef<Self>) -> Result<(), Self::Error> {
+        let network_steam = self.network_stream.take().unwrap();
+        let (reader_half, writer_half) = network_steam.into_split();
+        let writer = kameo::actor::spawn_link(&actor_ref, Writer::new(writer_half)).await;
+        let reader =
+            kameo::actor::spawn_link(&actor_ref, Reader::new(actor_ref.clone(), reader_half)).await;
+        self.writer = Some(writer);
+        self.reader = Some(reader);
+        Ok(())
+    }
+}
+
+impl<H: MessageHandler<Session = Self>> Message<SessionMessage> for TcpSession<H> {
+    type Reply = ();
+
+    async fn handle(
+        &mut self,
+        msg: SessionMessage,
+        ctx: &mut Context<Self, Self::Reply>,
+    ) -> Self::Reply {
+        match msg {
+            SessionMessage::Write(message) => {
+                if let Some(writer) = self.writer.as_mut() {
+                    writer.tell(Write(message)).await.unwrap();
+                }
+            }
+            SessionMessage::Read(message) => {
+                self.message_handler
+                    .message_read(ctx.actor_ref(), message)
+                    .await;
+            }
+        }
+    }
+}
+
+struct Reader<T>
 where
     T: Actor + Message<SessionMessage>,
 {
     session_ref: ActorRef<T>,
-    reader: Option<ReaderHalf>,
+    reader: Option<OwnedReadHalf>,
     join_handle: Option<JoinHandle<()>>,
 }
 impl<T: Actor + Message<SessionMessage>> Reader<T> {
-    pub fn new(session_ref: ActorRef<T>, reader: ReaderHalf) -> Self {
+    pub fn new(session_ref: ActorRef<T>, reader: OwnedReadHalf) -> Self {
         Self {
             session_ref,
             reader: Some(reader),
@@ -43,7 +117,7 @@ impl<T: Actor + Message<SessionMessage>> Actor for Reader<T> {
                 match read_half.read_u32().await {
                     Ok(length) => {
                         tracing::trace!("Payload length message ({length}) received");
-                        match read_half.read_n_bytes(length as usize).await {
+                        match read_n_bytes(&mut read_half, length as usize).await {
                             Ok(buf) => {
                                 tracing::trace!("Payload of length({}) received", buf.len());
                                 // NOTE: Our implementation writes 2 messages when sending something over the wire, the first
@@ -94,11 +168,11 @@ impl<T: Actor + Message<SessionMessage>> Actor for Reader<T> {
     }
 }
 
-pub struct Writer {
-    writer: WriterHalf,
+struct Writer {
+    writer: OwnedWriteHalf,
 }
 impl Writer {
-    pub fn new(writer: WriterHalf) -> Self {
+    pub fn new(writer: OwnedWriteHalf) -> Self {
         Self { writer }
     }
 }
@@ -106,7 +180,7 @@ impl Actor for Writer {
     type Mailbox = UnboundedMailbox<Self>;
     type Error = anyhow::Error;
 }
-pub struct Write(pub LogicMessage);
+struct Write(pub LogicMessage);
 
 impl Message<Write> for Writer {
     type Reply = anyhow::Result<()>;
@@ -116,8 +190,8 @@ impl Message<Write> for Writer {
 
         let bytes = LogicMessage::to_bytes(&message);
         let stream = &mut self.writer;
-        let half = &mut stream.0;
-        half.writable().await?;
+        stream.writable().await?;
+        use tokio::io::AsyncWriteExt;
         if let Err(write_err) = stream.write_u32(bytes.len() as u32).await {
             tracing::warn!("Error writing to the stream '{}'", write_err);
         } else {
@@ -134,4 +208,24 @@ impl Message<Write> for Writer {
         }
         Ok(())
     }
+}
+async fn read_n_bytes(
+    read_half: &mut OwnedReadHalf,
+    len: usize,
+) -> Result<Vec<u8>, tokio::io::Error> {
+    let mut buf = vec![0u8; len];
+    let mut c_len = 0;
+    read_half.readable().await?;
+    while c_len < len {
+        let n = read_half.read(buf.as_mut_slice()).await?;
+        if n == 0 {
+            // EOF
+            return Err(tokio::io::Error::new(
+                tokio::io::ErrorKind::UnexpectedEof,
+                "EOF",
+            ));
+        }
+        c_len += n;
+    }
+    Ok(buf)
 }

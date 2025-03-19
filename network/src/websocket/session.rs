@@ -1,5 +1,4 @@
-use crate::tcp::message::LogicMessage;
-use crate::tcp::session::SessionMessage;
+use crate::{LogicMessage, MessageHandler, NetworkStreamInfo, SessionMessage};
 use futures_util::stream::{SplitSink, SplitStream};
 use futures_util::{SinkExt, StreamExt};
 use kameo::Actor;
@@ -7,12 +6,88 @@ use kameo::actor::{ActorRef, WeakActorRef};
 use kameo::error::ActorStopReason;
 use kameo::mailbox::unbounded::UnboundedMailbox;
 use kameo::message::{Context, Message};
+use std::net::SocketAddr;
 use tokio::net::TcpStream;
 use tokio::task::JoinHandle;
 use tokio_tungstenite::WebSocketStream;
 use tokio_tungstenite::tungstenite::Message as WsMessage;
+pub struct WsSession<H>
+where
+    H: MessageHandler<Session = Self>,
+{
+    network_stream_info: NetworkStreamInfo,
+    network_stream: Option<WebSocketStream<TcpStream>>,
+    writer: Option<ActorRef<Writer>>,
+    reader: Option<ActorRef<Reader<Self>>>,
+    message_handler: H,
+}
 
-pub struct Reader<T>
+impl<H> WsSession<H>
+where
+    H: MessageHandler<Session = Self>,
+{
+    pub async fn new(
+        network_stream_info: NetworkStreamInfo,
+        network_stream: TcpStream,
+        message_handler: H,
+    ) -> anyhow::Result<Self> {
+        let ws_socket = tokio_tungstenite::accept_async(network_stream).await?;
+
+        Ok(Self {
+            network_stream_info,
+            network_stream: Some(ws_socket),
+            writer: None,
+            reader: None,
+            message_handler,
+        })
+    }
+    pub fn local_addr(&self) -> SocketAddr {
+        self.network_stream_info.local_addr
+    }
+    pub fn peer_addr(&self) -> SocketAddr {
+        self.network_stream_info.peer_addr
+    }
+}
+impl<T: MessageHandler<Session = Self>> Actor for WsSession<T> {
+    type Mailbox = UnboundedMailbox<Self>;
+    type Error = anyhow::Error;
+
+    async fn on_start(&mut self, actor_ref: ActorRef<Self>) -> Result<(), Self::Error> {
+        let network_steam = self.network_stream.take().unwrap();
+        let (writer_half, reader_half) = network_steam.split();
+        let writer = kameo::actor::spawn_link(&actor_ref, Writer::new(writer_half)).await;
+        let reader =
+            kameo::actor::spawn_link(&actor_ref, Reader::new(actor_ref.clone(), reader_half)).await;
+        self.writer = Some(writer);
+        self.reader = Some(reader);
+        Ok(())
+    }
+}
+
+impl<H: MessageHandler<Session = Self>> Message<SessionMessage> for WsSession<H> {
+    type Reply = ();
+
+    async fn handle(
+        &mut self,
+        msg: SessionMessage,
+        ctx: &mut Context<Self, Self::Reply>,
+    ) -> Self::Reply {
+        match msg {
+            SessionMessage::Write(message) => {
+                if let Some(writer) = self.writer.as_mut() {
+                    writer.tell(Write(message)).await.unwrap();
+                }
+            }
+            SessionMessage::Read(message) => {
+                self.message_handler
+                    .message_read(ctx.actor_ref(), message)
+                    .await;
+            }
+        }
+    }
+}
+
+struct Reader<T>
 where
     T: Actor + Message<SessionMessage>,
 {
@@ -75,7 +150,7 @@ impl<T: Actor + Message<SessionMessage>> Actor for Reader<T> {
     }
 }
 
-pub struct Writer {
+struct Writer {
     writer: SplitSink<WebSocketStream<TcpStream>, WsMessage>,
 }
 impl Writer {
@@ -87,7 +162,7 @@ impl Actor for Writer {
     type Mailbox = UnboundedMailbox<Self>;
     type Error = anyhow::Error;
 }
-pub struct Write(pub LogicMessage);
+struct Write(pub LogicMessage);
 
 impl Message<Write> for Writer {
     type Reply = anyhow::Result<()>;

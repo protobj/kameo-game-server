@@ -23,6 +23,7 @@
       <sourceFolder url="file://$MODULE_DIR$/resource/proto/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/servers/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/network/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/network/examples" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />
