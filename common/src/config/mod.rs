@@ -17,7 +17,7 @@ pub fn init_config() {
 pub struct Args {
     #[arg(short, long, default_value = "../conf/config-dev.toml")]
     pub config: String,
-    #[arg(short, long, value_enum, default_value = "Gate")]
+    #[arg(short, long, value_enum, default_value = "gate")]
     pub role: ServerRole,
     #[arg(short, long, default_value = "1")]
     pub id: u32,
@@ -96,39 +96,35 @@ impl Default for ConfigSourceType {
 
 #[derive(Debug, Clone, Default, Deserialize)]
 pub struct LoginServerConfig {
-    id: u32,
-    host: String,
-    port: u16,
+    pub id: u32,
+    pub host: String,
+    pub port: u16,
 }
 #[derive(Debug, Clone, Default, Deserialize)]
 pub struct GateServerConfig {
-    id: u32,
-    host: String,
-    port: u16,
-    out_tcp_port: u16,
+    pub id: u32,
+    pub host: String,
+    pub port: u16,
+    pub out_tcp_port: u16,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
 pub struct WorldServerConfig {
-    id: u32,
-    host: String,
-    port: u16,
+    pub id: u32,
+    pub host: String,
+    pub port: u16,
 }
 #[derive(Debug, Clone, Default, Deserialize)]
 pub struct PlayerServerConfig {
-    id: u32,
-    host: String,
-    port: u16,
+    pub id: u32,
+    pub host: String,
+    pub port: u16,
 }
 #[derive(Debug, Clone, ValueEnum, Deserialize)]
 pub enum ServerRole {
-    #[value(name = "Login")]
     Login,
-    #[value(name = "Gate")]
     Gate,
-    #[value(name = "Game")]
     Game,
-    #[value(name = "World")]
     World,
 }
 pub mod config_test {

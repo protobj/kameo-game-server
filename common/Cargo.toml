@@ -20,5 +20,5 @@ tracing-glog = "0.4"
 tracing-subscriber = { workspace = true, features = ["env-filter"] }
 tracing = { workspace = true }
 bytes = { workspace = true }
-tokio = "1.44.0"
+tokio = { workspace = true }
 kameo = { workspace = true }
