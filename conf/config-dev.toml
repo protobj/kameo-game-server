@@ -7,24 +7,25 @@ access_key_id = "AKIAIOSFODNN7EXAMPLE"
 secret_access_key = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
 endpoint = "http://localhost:4566"
 bucket = "qs001"
+[log]
+console = true
+level = "trace"
+
 [[login]]
 id = 1
-host = "0.0.0.0"
-port = 30000
+in_address = "/ip4/0.0.0.0/udp/30000/quic-v1"
 keydb = { host = "localhost", port = 6379, password = "", db = "0", pool_size = 16 }
-
 [[gate]]
 id = 1
-host = "0.0.0.0"
-port = 35000
+in_address = "/ip4/0.0.0.0/udp/35000/quic-v1"
 out_tcp_port = 5678
+out_ws_port = 5679
 
 [[world]]
 id = 1
-host = "0.0.0.0"
-port = 40000
+in_address = "/ip4/0.0.0.0/udp/40000/quic-v1"
 
 [[player]]
 id = 1
-host = "0.0.0.0"
-port = 45000
+in_address = "/ip4/0.0.0.0/udp/45000/quic-v1"
+keydb = { host = "localhost", port = 6379, password = "", db = "0", pool_size = 16 }

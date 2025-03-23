@@ -8,3 +8,4 @@ common = { path = "../common" }
 crossbeam = "*"
 kameo = { workspace = true }
 tokio = { workspace = true }
+anyhow = { workspace = true }

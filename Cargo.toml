@@ -11,8 +11,6 @@ members = [
 [workspace.dependencies]
 arc-swap = "*"
 tokio = { version = "*", features = ["full"] }
-tracing = { version = "*", features = ["attributes"] }
-tracing-subscriber = { version = "*", features = ["env-filter"] }
 clap = { version = "*", features = ["derive"] }
 anyhow = "*"
 crossbeam-utils = "*"
@@ -21,5 +19,8 @@ prost = "*"
 prost-build = "*"
 serde = "*"
 async-trait = "*"
-kameo = { version = "0.15.0" }
+kameo = { version = "0.15", features = ["remote"] }
 thiserror = "*"
+tracing = "0.1.41"
+tracing-subscriber = "*"
+tracing-glog = "*"

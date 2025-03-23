@@ -1,4 +1,4 @@
-pub mod gate_lib;
-pub mod game_lib;
-pub mod login_lib;
-pub mod world_lib;
+pub mod lib_gate;
+pub mod lib_game;
+pub mod lib_login;
+pub mod lib_world;

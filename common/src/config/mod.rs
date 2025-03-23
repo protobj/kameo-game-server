@@ -1,8 +1,13 @@
+use anyhow::anyhow;
+use clap::ArgAction;
+use clap::builder::{TypedValueParser, ValueParserFactory};
+use clap::error::{ContextKind, ContextValue, ErrorKind};
 use clap::{Parser, ValueEnum};
 use serde::Deserialize;
 use std::fs;
 use std::io::{IsTerminal, stderr};
 use std::path::{Path, PathBuf};
+use std::str::FromStr;
 use std::sync::OnceLock;
 use toml::Table;
 use tracing_subscriber::filter::Directive;
@@ -17,18 +22,34 @@ pub fn init_config() {
 pub struct Args {
     #[arg(short, long, default_value = "../conf/config-dev.toml")]
     pub config: String,
-    #[arg(short, long, value_enum, default_value = "gate")]
-    pub role: ServerRole,
-    #[arg(short, long, default_value = "1")]
-    pub id: u32,
+    #[arg(short, long,action = ArgAction::Append,value_parser = parse_role_id)]
+    pub server: Vec<ServerRoleId>,
     #[arg(short, long, default_value = "info", use_value_delimiter = true)]
     pub log: Vec<Directive>,
 }
+#[derive(Clone, Debug)]
+pub struct ServerRoleId(pub ServerRole, pub u32);
 
-impl Args {
-    fn get_server_id(&self) -> String {
-        return format!("{:?}/{}", &self.role, &self.id);
+impl FromStr for ServerRoleId {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let parts: Vec<&str> = s.split('/').collect();
+        if parts.len() != 2 {
+            return Err(format!("Invalid format: {}, expected name/id", s));
+        }
+
+        let id = parts[1]
+            .parse::<u32>()
+            .map_err(|_| format!("Invalid ID: {}", parts[1]))?;
+        let role = ServerRole::from_str(parts[0], true)
+            .map_err(|_| format!("Invalid role: {}", parts[0]))?;
+        Ok(ServerRoleId(role, id))
     }
+}
+// 自定义解析函数
+fn parse_role_id(s: &str) -> Result<ServerRoleId, String> {
+    ServerRoleId::from_str(s)
 }
 #[derive(Debug, Deserialize)]
 pub struct GlobalConfig {
@@ -36,18 +57,32 @@ pub struct GlobalConfig {
     login: Vec<LoginServerConfig>,
     gate: Vec<GateServerConfig>,
     world: Vec<WorldServerConfig>,
-    player: Vec<PlayerServerConfig>,
+    game: Vec<GameServerConfig>,
 }
 impl From<&Args> for anyhow::Result<GlobalConfig> {
     fn from(value: &Args) -> Self {
         tracing::info!("conf file is : {}", &value.config);
         let config = fs::read_to_string(&value.config)?;
-        let mut result: GlobalConfig = toml::from_str(&config)?;
+        let result: GlobalConfig = toml::from_str(&config)?;
         Ok(result)
     }
 }
+impl GlobalConfig {
+    pub fn find_gate_config(&self, id: u32) -> Option<GateServerConfig> {
+        return self.gate.iter().find(|g| g.id == id).cloned();
+    }
+    pub fn find_login_config(&self, id: u32) -> Option<LoginServerConfig> {
+        return self.login.iter().find(|g| g.id == id).cloned();
+    }
+    pub fn find_world_config(&self, id: u32) -> Option<WorldServerConfig> {
+        return self.world.iter().find(|g| g.id == id).cloned();
+    }
+    pub fn find_player_config(&self, id: u32) -> Option<GameServerConfig> {
+        return self.game.iter().find(|g| g.id == id).cloned();
+    }
+}
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Deserialize)]
 pub struct RedisConfig {
     pub host: String,
     pub port: u16,
@@ -97,28 +132,27 @@ impl Default for ConfigSourceType {
 #[derive(Debug, Clone, Default, Deserialize)]
 pub struct LoginServerConfig {
     pub id: u32,
-    pub host: String,
-    pub port: u16,
+    pub in_address: String,
+    pub keydb: RedisConfig,
 }
 #[derive(Debug, Clone, Default, Deserialize)]
 pub struct GateServerConfig {
     pub id: u32,
-    pub host: String,
-    pub port: u16,
+    pub in_address: String,
     pub out_tcp_port: u16,
+    pub out_ws_port: u16,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
 pub struct WorldServerConfig {
     pub id: u32,
-    pub host: String,
-    pub port: u16,
+    pub in_address: String,
 }
 #[derive(Debug, Clone, Default, Deserialize)]
-pub struct PlayerServerConfig {
+pub struct GameServerConfig {
     pub id: u32,
-    pub host: String,
-    pub port: u16,
+    pub in_address: String,
+    pub keydb: RedisConfig,
 }
 #[derive(Debug, Clone, ValueEnum, Deserialize)]
 pub enum ServerRole {

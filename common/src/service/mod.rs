@@ -9,7 +9,7 @@ pub trait Service {
         self.start().await?;
         Ok(self.wait_stop(wait_for_stop).await)
     }
-    async fn start(&mut self) -> anyhow::Result<()>;
+    fn start(&mut self) -> impl std::future::Future<Output = anyhow::Result<()>> + Send;
     async fn wait_stop(&mut self, wait_for_stop: Option<WaitGroup>) {
         if let Some(signal) = wait_for_stop {
             signal.wait()
@@ -21,7 +21,7 @@ pub trait Service {
             };
             #[cfg(unix)]
             let terminate = async {
-                use tokio::signal::unix::{SignalKind, signal};
+                use tokio::signal::unix::{signal, SignalKind};
                 let mut sigterm = signal(SignalKind::terminate())
                     .expect(format!("[{}]failed to install signal", self.name()).as_str());
 
@@ -43,5 +43,5 @@ pub trait Service {
         }
     }
 
-    async fn stop(&mut self);
+    fn stop(&mut self) -> impl std::future::Future<Output = ()> + Send;
 }
