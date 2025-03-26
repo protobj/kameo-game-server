@@ -2,8 +2,9 @@ use crate::Node;
 use crate::game::GameActor;
 use crate::gate::session::GateSession;
 use anyhow::Context;
+use common::config::ServerRole::Gate;
 use common::config::{GateServerConfig, GlobalConfig, ServerRoleId};
-use kameo::actor::{ActorRef, WeakActorRef};
+use kameo::actor::{ActorRef, PreparedActor, WeakActorRef};
 use kameo::error::ActorStopReason;
 use kameo::mailbox::unbounded::UnboundedMailbox;
 use kameo::remote::ActorSwarm;
@@ -119,13 +120,17 @@ impl GateActor {
         }
 
         let tcp_ref = kameo::spawn(Listener::new(port, move |info, stream| async move {
-            Ok(kameo::actor::spawn(TcpSession::new(
+            //先初始化actor, 再spawn
+            let prepared_actor = PreparedActor::<TcpSession<TcpMessageHandler>>::new();
+            let actor_ref = prepared_actor.actor_ref().clone();
+            prepared_actor.spawn(TcpSession::new(
                 info,
                 stream,
                 TcpMessageHandler {
-                    gate_session: GateSession {},
+                    gate_session: GateSession::new_tcp(Some(actor_ref.clone())),
                 },
-            )))
+            ));
+            Ok(actor_ref)
         }));
         tcp_ref.wait_startup().await;
         Some(tcp_ref)
@@ -138,16 +143,23 @@ impl GateActor {
         if port == 0 {
             return None;
         }
+
         let ws_ref = kameo::spawn(Listener::new(port, move |info, stream| async move {
+            //先初始化actor, 再spawn
+            let prepared_actor = PreparedActor::<WsSession<WebSocketMessageHandler>>::new();
+            let actor_ref = prepared_actor.actor_ref().clone();
             WsSession::new(
                 info,
                 stream,
                 WebSocketMessageHandler {
-                    gate_session: GateSession {},
+                    gate_session: GateSession::new_ws(Some(actor_ref.clone())),
                 },
             )
             .await
-            .map(move |ws_session| kameo::actor::spawn(ws_session))
+            .map(move |ws_session| {
+                prepared_actor.spawn(ws_session);
+                actor_ref
+            })
         }));
         ws_ref.wait_startup().await;
         Some(ws_ref)
