@@ -1,3 +1,18 @@
+[package]
+name = "qs001-server"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+common = { path = "common" }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+tokio = { workspace = true }
+lib = { path = "lib" }
+crossbeam-utils = { workspace = true }
+futures = { workspace = true }
+
+
 [workspace]
 members = [
     "resource/luban_lib",
@@ -7,7 +22,6 @@ members = [
     "common",
     "network",
     "lib",
-    "bin",
 ]
 resolver = "3"
 [workspace.dependencies]
@@ -29,3 +43,29 @@ tracing-appender = "*"
 log = "0.4.17"
 time = { version = "0.3.41", features = ["local-offset"] }
 futures = { version = "*" }
+
+
+
+[profile.dev]
+opt-level = 0
+debug = true
+split-debuginfo = '...'  # Platform-specific.
+debug-assertions = true
+overflow-checks = true
+lto = false
+panic = 'unwind'
+incremental = true
+codegen-units = 256
+rpath = false
+
+[profile.release]
+opt-level = 3
+debug = false
+split-debuginfo = '...'  # Platform-specific.
+debug-assertions = false
+overflow-checks = false
+lto = true
+panic = 'unwind'
+incremental = false
+codegen-units = 16
+rpath = false

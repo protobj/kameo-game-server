@@ -1,18 +1,40 @@
+use crate::Node;
 use common::config::{GlobalConfig, ServerRoleId};
-use common::service::{Node, Signal};
+use kameo::Actor;
+use kameo::mailbox::unbounded::UnboundedMailbox;
 use kameo::remote::ActorSwarm;
 use std::sync::Arc;
 use tokio::sync::watch::Receiver;
 
-pub struct LoginNode;
-#[async_trait::async_trait]
-impl Node for LoginNode {
+pub struct LoginActor {
+    config: Arc<GlobalConfig>,
+    server_role_id: ServerRoleId,
+}
 
-    async fn start(&self, global_config: Arc<GlobalConfig>, server_role_id: ServerRoleId) -> anyhow::Result<()> {
+impl LoginActor {
+    pub fn new(config: Arc<GlobalConfig>, server_role_id: ServerRoleId) -> Self {
+        Self {
+            config,
+            server_role_id,
+        }
+    }
+}
+
+#[async_trait::async_trait]
+impl Node for LoginActor {
+    async fn start(&mut self) -> anyhow::Result<()> {
         Ok(())
     }
 
-    async fn stop(&self) -> anyhow::Result<()> {
-    Ok(())
+    async fn stop(&mut self) -> anyhow::Result<()> {
+        Ok(())
     }
+
+    fn server_role_id(&self) -> ServerRoleId {
+        self.server_role_id.clone()
+    }
+}
+impl Actor for LoginActor {
+    type Mailbox = UnboundedMailbox<Self>;
+    type Error = anyhow::Error;
 }

@@ -48,7 +48,7 @@ fn parse_role_id(s: &str) -> Result<ServerRoleId, String> {
 }
 #[derive(Debug, Deserialize)]
 pub struct GlobalConfig {
-    config: DataConfig,
+    pub config: DataConfig,
     pub log: LogConfig,
     login: Vec<LoginServerConfig>,
     gate: Vec<GateServerConfig>,
@@ -76,6 +76,9 @@ impl GlobalConfig {
     }
     pub fn find_player_config(&self, id: u32) -> Option<GameServerConfig> {
         return self.game.iter().find(|g| g.id == id).cloned();
+    }
+    pub fn find_all_login_config(&self) -> Vec<LoginServerConfig> {
+        return self.login.clone();
     }
 }
 

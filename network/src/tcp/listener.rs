@@ -50,14 +50,14 @@ impl<T: Actor + Message<SessionMessage>> Actor for Listener<T> {
         let port = self.port.clone();
         let out_connection_handler = self.connection_handler.clone();
         let join_handle = tokio::spawn(async move {
-            let addr = format!("127.0.0.1:{}", port);
+            let addr = format!("0.0.0.0:{}", port);
             let listener = match TcpListener::bind(&addr).await {
                 Ok(l) => l,
                 Err(err) => {
                     panic!("Unable to bind tcp listener: {}", err);
                 }
             };
-            tracing::trace!("Listening on {}", addr);
+            tracing::info!("Listening on {}", addr);
             loop {
                 match listener.accept().await {
                     Ok((stream, addr)) => {
@@ -66,7 +66,7 @@ impl<T: Actor + Message<SessionMessage>> Actor for Listener<T> {
                             peer_addr: addr,
                             local_addr: local,
                         };
-                        tracing::info!("TCP Session opened for {addr}");
+                        tracing::info!("Session opened for {addr}");
                         let server_actor_ref = actor_ref.clone();
                         let connection_handler = out_connection_handler.clone();
                         tokio::spawn(async move {

@@ -18,10 +18,10 @@ use tokio::sync::mpsc;
 async fn main() -> anyhow::Result<()> {
     pub struct TcpMessageHandler;
     impl MessageHandler for TcpMessageHandler {
-        type Session = TcpSession<Self>;
+        type Actor = TcpSession<Self>;
         async fn message_read(
-            &self,
-            actor_ref: ActorRef<Self::Session>,
+            &mut self,
+            actor_ref: ActorRef<Self::Actor>,
             logic_message: LogicMessage,
         ) {
             actor_ref

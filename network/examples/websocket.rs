@@ -13,11 +13,11 @@ use tokio_tungstenite::tungstenite::Message;
 async fn main() -> anyhow::Result<()> {
     pub struct WsMessageHandler;
     impl MessageHandler for WsMessageHandler {
-        type Session = WsSession<Self>;
+        type Actor = WsSession<Self>;
 
         fn message_read(
-            &self,
-            actor_ref: ActorRef<Self::Session>,
+            &mut self,
+            actor_ref: ActorRef<Self::Actor>,
             logic_message: LogicMessage,
         ) -> impl Future<Output = ()> + Send {
             async move {

@@ -13,7 +13,7 @@ use tokio_tungstenite::WebSocketStream;
 use tokio_tungstenite::tungstenite::Message as WsMessage;
 pub struct WsSession<H>
 where
-    H: MessageHandler<Session = Self>,
+    H: MessageHandler<Actor= Self>,
 {
     network_stream_info: NetworkStreamInfo,
     network_stream: Option<WebSocketStream<TcpStream>>,
@@ -24,7 +24,7 @@ where
 
 impl<H> WsSession<H>
 where
-    H: MessageHandler<Session = Self>,
+    H: MessageHandler<Actor= Self>,
 {
     pub async fn new(
         network_stream_info: NetworkStreamInfo,
@@ -48,7 +48,7 @@ where
         self.network_stream_info.peer_addr
     }
 }
-impl<T: MessageHandler<Session = Self>> Actor for WsSession<T> {
+impl<T: MessageHandler<Actor= Self>> Actor for WsSession<T> {
     type Mailbox = UnboundedMailbox<Self>;
     type Error = anyhow::Error;
 
@@ -64,7 +64,7 @@ impl<T: MessageHandler<Session = Self>> Actor for WsSession<T> {
     }
 }
 
-impl<H: MessageHandler<Session = Self>> Message<SessionMessage> for WsSession<H> {
+impl<H: MessageHandler<Actor= Self>> Message<SessionMessage> for WsSession<H> {
     type Reply = ();
 
     async fn handle(

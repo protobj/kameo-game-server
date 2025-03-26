@@ -13,7 +13,7 @@ use tokio::task::JoinHandle;
 
 pub struct TcpSession<H>
 where
-    H: MessageHandler<Session = Self>,
+    H: MessageHandler<Actor= Self>,
 {
     network_stream_info: NetworkStreamInfo,
     network_stream: Option<TcpStream>,
@@ -24,7 +24,7 @@ where
 
 impl<H> TcpSession<H>
 where
-    H: MessageHandler<Session = Self>,
+    H: MessageHandler<Actor= Self>,
 {
     pub fn new(
         network_stream_info: NetworkStreamInfo,
@@ -47,7 +47,7 @@ where
         self.network_stream_info.peer_addr
     }
 }
-impl<T: MessageHandler<Session = Self>> Actor for TcpSession<T> {
+impl<T: MessageHandler<Actor= Self>> Actor for TcpSession<T> {
     type Mailbox = UnboundedMailbox<Self>;
     type Error = anyhow::Error;
 
@@ -63,7 +63,7 @@ impl<T: MessageHandler<Session = Self>> Actor for TcpSession<T> {
     }
 }
 
-impl<H: MessageHandler<Session = Self>> Message<SessionMessage> for TcpSession<H> {
+impl<H: MessageHandler<Actor= Self>> Message<SessionMessage> for TcpSession<H> {
     type Reply = ();
 
     async fn handle(

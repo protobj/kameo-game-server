@@ -1,19 +1,36 @@
+use crate::Node;
 use common::config::{GlobalConfig, ServerRoleId};
-use common::service::Node;
+use kameo::Actor;
+use kameo::mailbox::unbounded::UnboundedMailbox;
 use std::sync::Arc;
 
-pub struct GameNode;
+pub struct GameActor {
+    global_config: Arc<GlobalConfig>,
+    role_id: ServerRoleId,
+}
+impl GameActor {
+    pub fn new(global_config: Arc<GlobalConfig>, role_id: ServerRoleId) -> Self {
+        Self {
+            global_config,
+            role_id,
+        }
+    }
+}
 #[async_trait::async_trait]
-impl Node for GameNode {
-    async fn start(
-        &self,
-        global_config: Arc<GlobalConfig>,
-        server_role_id: ServerRoleId,
-    ) -> anyhow::Result<()> {
+impl Node for GameActor {
+    async fn start(&mut self) -> anyhow::Result<()> {
         Ok(())
     }
 
-    async fn stop(&self) -> anyhow::Result<()> {
+    async fn stop(&mut self) -> anyhow::Result<()> {
         Ok(())
     }
+
+    fn server_role_id(&self) -> ServerRoleId {
+        self.role_id.clone()
+    }
+}
+impl Actor for GameActor {
+    type Mailbox = UnboundedMailbox<Self>;
+    type Error = anyhow::Error;
 }

@@ -1,11 +1,10 @@
-use common::config::{ARGS, Args, GlobalConfig, ServerRole, init_config};
+use common::config::{ARGS, Args, GlobalConfig, ServerRole, ServerRoleId, init_config};
 use common::logging::init_log;
-use common::service::{Node, Signal};
-use crossbeam_utils::sync::WaitGroup;
-use lib::game::GameNode;
-use lib::gate::GateNode;
-use lib::login::LoginNode;
-use lib::world::WorldNode;
+use lib::game::GameActor;
+use lib::gate::{GateActor, GateNode};
+use lib::login::LoginActor;
+use lib::world::WorldActor;
+use lib::{Node, Signal};
 use std::sync::Arc;
 use tokio::sync::watch;
 use tokio::sync::watch::Sender;
@@ -45,10 +44,11 @@ async fn main() -> anyhow::Result<()> {
         let config_clone = config.clone();
         let signal_rx = rx.clone();
 
-        let node: Box<dyn Node> = create_node(&server_role_id.0);
+        let mut node: Box<dyn Node> =
+            create_node(&server_role_id.0, config_clone, server_role_id.clone());
         let join_handle = tokio::spawn(async move {
             let full_name = server_role_id.to_string();
-            node.init(config_clone, server_role_id, signal_rx)
+            node.init(signal_rx)
                 .await
                 .expect(format!("init {} failed", full_name).as_str());
         });
@@ -79,9 +79,8 @@ fn listen_stop(tx: Sender<Signal>, join_handles: &mut Vec<JoinHandle<()>>) {
         #[cfg(unix)]
         let terminate = async {
             use tokio::signal::unix::{SignalKind, signal};
-            let mut sigterm = signal(SignalKind::terminate())
-                .expect(format!("[{}]failed to install signal", self.name()).as_str());
-
+            let mut sigterm =
+                signal(SignalKind::terminate()).expect("Failed to install SIGTERM handler");
             sigterm.recv().await;
         };
         #[cfg(not(unix))]
@@ -100,11 +99,15 @@ fn listen_stop(tx: Sender<Signal>, join_handles: &mut Vec<JoinHandle<()>>) {
     }));
 }
 
-fn create_node(role: &ServerRole) -> Box<dyn Node> {
+fn create_node(
+    role: &ServerRole,
+    config: Arc<GlobalConfig>,
+    server_role_id: ServerRoleId,
+) -> Box<dyn Node> {
     match role {
-        ServerRole::Login => Box::new(LoginNode),
-        ServerRole::Gate => Box::new(GateNode),
-        ServerRole::Game => Box::new(GameNode),
-        ServerRole::World => Box::new(WorldNode),
+        ServerRole::Login => Box::new(LoginActor::new(config, server_role_id)),
+        ServerRole::Gate => Box::new(GateNode::new(config, server_role_id)),
+        ServerRole::Game => Box::new(GameActor::new(config, server_role_id)),
+        ServerRole::World => Box::new(WorldActor::new(config, server_role_id)),
     }
 }

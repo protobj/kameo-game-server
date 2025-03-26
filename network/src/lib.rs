@@ -13,10 +13,10 @@ pub enum SessionMessage {
 }
 
 pub trait MessageHandler: Send + 'static {
-    type Session: Actor;
+    type Actor: Actor;
     fn message_read(
-        &self,
-        actor_ref: ActorRef<Self::Session>,
+        &mut self,
+        actor_ref: ActorRef<Self::Actor>,
         logic_message: LogicMessage,
     ) -> impl Future<Output = ()> + Send;
 }
