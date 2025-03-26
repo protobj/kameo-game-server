@@ -1,6 +1,6 @@
 use crate::Node;
 use crate::game::GameActor;
-use crate::gate::session::GateSession;
+use crate::gate::session::ClientSession;
 use anyhow::Context;
 use common::config::ServerRole::Gate;
 use common::config::{GateServerConfig, GlobalConfig, ServerRoleId};
@@ -127,7 +127,7 @@ impl GateActor {
                 info,
                 stream,
                 TcpMessageHandler {
-                    gate_session: GateSession::new_tcp(Some(actor_ref.clone())),
+                    gate_session: ClientSession::new_tcp(Some(actor_ref.clone())),
                 },
             ));
             Ok(actor_ref)
@@ -152,7 +152,7 @@ impl GateActor {
                 info,
                 stream,
                 WebSocketMessageHandler {
-                    gate_session: GateSession::new_ws(Some(actor_ref.clone())),
+                    gate_session: ClientSession::new_ws(Some(actor_ref.clone())),
                 },
             )
             .await
@@ -222,8 +222,8 @@ impl Display for GateActorError {
     }
 }
 
-struct TcpMessageHandler {
-    gate_session: GateSession,
+pub(crate) struct TcpMessageHandler {
+    gate_session: ClientSession,
 }
 impl MessageHandler for TcpMessageHandler {
     type Actor = TcpSession<Self>;
@@ -237,8 +237,8 @@ impl MessageHandler for TcpMessageHandler {
     }
 }
 
-struct WebSocketMessageHandler {
-    gate_session: GateSession,
+pub(crate) struct WebSocketMessageHandler {
+    gate_session: ClientSession,
 }
 impl MessageHandler for WebSocketMessageHandler {
     type Actor = WsSession<Self>;
