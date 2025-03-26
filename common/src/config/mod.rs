@@ -1,18 +1,11 @@
-use anyhow::anyhow;
 use clap::ArgAction;
-use clap::builder::{TypedValueParser, ValueParserFactory};
-use clap::error::{ContextKind, ContextValue, ErrorKind};
 use clap::{Parser, ValueEnum};
 use serde::Deserialize;
+use std::fmt::{Display, Formatter};
 use std::fs;
-use std::io::{IsTerminal, stderr};
-use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use std::sync::OnceLock;
-use toml::Table;
-use tracing_subscriber::filter::Directive;
-
-static ARGS: OnceLock<Args> = OnceLock::new();
+pub static ARGS: OnceLock<Args> = OnceLock::new();
 
 pub fn init_config() {
     ARGS.get_or_init(|| Args::parse());
@@ -24,19 +17,21 @@ pub struct Args {
     pub config: String,
     #[arg(short, long,action = ArgAction::Append,value_parser = parse_role_id)]
     pub server: Vec<ServerRoleId>,
-    #[arg(short, long, default_value = "info", use_value_delimiter = true)]
-    pub log: Vec<Directive>,
 }
 #[derive(Clone, Debug)]
 pub struct ServerRoleId(pub ServerRole, pub u32);
-
+impl Display for ServerRoleId {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_str(format!("{}-{}", self.0.to_string(), self.1.to_string()).as_str())
+    }
+}
 impl FromStr for ServerRoleId {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let parts: Vec<&str> = s.split('/').collect();
+        let parts: Vec<&str> = s.split('-').collect();
         if parts.len() != 2 {
-            return Err(format!("Invalid format: {}, expected name/id", s));
+            return Err(format!("Invalid format: {}, expected name-id", s));
         }
 
         let id = parts[1]
@@ -54,11 +49,13 @@ fn parse_role_id(s: &str) -> Result<ServerRoleId, String> {
 #[derive(Debug, Deserialize)]
 pub struct GlobalConfig {
     config: DataConfig,
+    pub log: LogConfig,
     login: Vec<LoginServerConfig>,
     gate: Vec<GateServerConfig>,
     world: Vec<WorldServerConfig>,
     game: Vec<GameServerConfig>,
 }
+
 impl From<&Args> for anyhow::Result<GlobalConfig> {
     fn from(value: &Args) -> Self {
         tracing::info!("conf file is : {}", &value.config);
@@ -80,6 +77,14 @@ impl GlobalConfig {
     pub fn find_player_config(&self, id: u32) -> Option<GameServerConfig> {
         return self.game.iter().find(|g| g.id == id).cloned();
     }
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+pub struct LogConfig {
+    pub console: bool,
+    pub level: String,
+    pub dir: String,
+    pub max_file: u32,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -161,15 +166,23 @@ pub enum ServerRole {
     Game,
     World,
 }
+impl Display for ServerRole {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ServerRole::Login => f.write_str("login"),
+            ServerRole::Gate => f.write_str("gate"),
+            ServerRole::Game => f.write_str("game"),
+            ServerRole::World => f.write_str("world"),
+        }
+    }
+}
 pub mod config_test {
     use crate::config::{ARGS, Args, GlobalConfig, init_config};
-    use crate::logging::init_logging;
 
     #[test]
     pub fn test() {
         init_config();
         let args = ARGS.get().expect("init fail");
-        init_logging(args.log.clone());
 
         let config: GlobalConfig = <&Args as Into<anyhow::Result<GlobalConfig>>>::into(args)
             .expect("GlobalConfig init fail");

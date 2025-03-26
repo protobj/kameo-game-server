@@ -9,12 +9,15 @@ endpoint = "http://localhost:4566"
 bucket = "qs001"
 [log]
 console = true
-level = "trace"
+level = "info"
+dir = "./logs"
+max_file = 7
+
 
 [[login]]
 id = 1
 in_address = "/ip4/0.0.0.0/udp/30000/quic-v1"
-keydb = { host = "localhost", port = 6379, password = "", db = "0", pool_size = 16 }
+keydb = { host = "localhost", port = 6379, password = "", db = 0, pool_size = 16 }
 [[gate]]
 id = 1
 in_address = "/ip4/0.0.0.0/udp/35000/quic-v1"
@@ -25,7 +28,7 @@ out_ws_port = 5679
 id = 1
 in_address = "/ip4/0.0.0.0/udp/40000/quic-v1"
 
-[[player]]
+[[game]]
 id = 1
 in_address = "/ip4/0.0.0.0/udp/45000/quic-v1"
-keydb = { host = "localhost", port = 6379, password = "", db = "0", pool_size = 16 }
+keydb = { host = "localhost", port = 6379, password = "", db = 0, pool_size = 16 }

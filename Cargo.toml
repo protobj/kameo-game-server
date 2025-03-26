@@ -6,8 +6,10 @@ members = [
     "protocol",
     "common",
     "network",
-    "lib", "bin/game", "bin/gate", "bin/login", "bin/world", "bin/allinone",
+    "lib",
+    "bin",
 ]
+resolver = "3"
 [workspace.dependencies]
 arc-swap = "*"
 tokio = { version = "*", features = ["full"] }
@@ -21,6 +23,8 @@ serde = "*"
 async-trait = "*"
 kameo = { version = "0.15", features = ["remote"] }
 thiserror = "*"
-tracing = "0.1.41"
-tracing-subscriber = "*"
-tracing-glog = "*"
+tracing = "*"
+tracing-subscriber = { version = "*", features = ["local-time", "env-filter", "tracing-log"] }
+tracing-appender = "*"
+log = "0.4.17"
+time = { version = "0.3.41", features = ["local-offset"] }

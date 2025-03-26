@@ -25,7 +25,6 @@
       <sourceFolder url="file://$MODULE_DIR$/network/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/network/examples" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/actors/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/bin/allinone/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/bin/game/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/bin/gate/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/bin/login/src" isTestSource="false" />
@@ -35,6 +34,7 @@
       <sourceFolder url="file://$MODULE_DIR$/server/gate/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/server/login/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/server/world/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/bin/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />

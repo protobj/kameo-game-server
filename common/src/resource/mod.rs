@@ -1,6 +1,5 @@
 use crate::config::ConfigSourceType;
 use arc_swap::{ArcSwap, ArcSwapAny, ArcSwapOption};
-use aws_sdk_dynamodb::config::retry::ShouldAttempt::No;
 use cfg::Tables;
 use crossbeam::atomic::AtomicCell;
 use crossbeam::epoch;

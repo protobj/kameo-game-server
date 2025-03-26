@@ -4,3 +4,4 @@
 /database/keydb/data
 /database/kvrocks/data
 /database/kvrocks/log
+./logs
