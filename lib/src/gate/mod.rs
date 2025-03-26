@@ -1,9 +1,23 @@
-use common::config::{GateServerConfig, GlobalConfig, ServerRoleId};
+use common::config::{GlobalConfig, ServerRoleId};
+use common::service::{Node, Signal};
 use kameo::Actor;
 use kameo::actor::ActorRef;
 use kameo::mailbox::unbounded::UnboundedMailbox;
 use kameo::remote::ActorSwarm;
 use std::sync::Arc;
+use tokio::sync::watch::Receiver;
+
+pub struct GateNode;
+#[async_trait::async_trait]
+impl Node for GateNode {
+    async fn start(&self, global_config: Arc<GlobalConfig>, server_role_id: ServerRoleId) -> anyhow::Result<()> {
+        Ok(())
+    }
+
+    async fn stop(&self) -> anyhow::Result<()> {
+        Ok(())
+    }
+}
 
 pub struct GateActor {
     role_id: ServerRoleId,

@@ -24,3 +24,4 @@ tracing-subscriber = { workspace = true }
 time = { workspace = true }
 log = { workspace = true }
 tracing-appender = { workspace = true }
+async-trait = { workspace = true }

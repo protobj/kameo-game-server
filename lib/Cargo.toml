@@ -1,5 +1,5 @@
 [package]
-name = "service"
+name = "lib"
 version = "0.1.0"
 edition = "2024"
 
@@ -9,3 +9,5 @@ crossbeam = "*"
 kameo = { workspace = true }
 tokio = { workspace = true }
 anyhow = { workspace = true }
+tracing = { workspace = true }
+async-trait = { workspace = true }

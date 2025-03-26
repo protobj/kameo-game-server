@@ -296,6 +296,9 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "common",
+ "crossbeam-utils",
+ "futures",
+ "lib",
  "tokio",
  "tracing",
 ]
@@ -459,6 +462,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "arc-swap",
+ "async-trait",
  "bytes",
  "cfg",
  "clap",
@@ -1561,6 +1565,19 @@ name = "lazy_static"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
+
+[[package]]
+name = "lib"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "common",
+ "crossbeam",
+ "kameo",
+ "tokio",
+ "tracing",
+]
 
 [[package]]
 name = "libc"
@@ -3033,17 +3050,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "87607cb1398ed59d48732e575a4c28a7a8ebf2454b964fe3f224f2afc07909e1"
 dependencies = [
  "serde",
-]
-
-[[package]]
-name = "service"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "common",
- "crossbeam",
- "kameo",
- "tokio",
 ]
 
 [[package]]

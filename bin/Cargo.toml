@@ -8,3 +8,6 @@ common = { path = "../common" }
 anyhow = { workspace = true }
 tracing = { workspace = true }
 tokio = { workspace = true }
+lib = { path = "../lib" }
+crossbeam-utils = { workspace = true }
+futures = { workspace = true }

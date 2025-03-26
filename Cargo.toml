@@ -28,3 +28,4 @@ tracing-subscriber = { version = "*", features = ["local-time", "env-filter", "t
 tracing-appender = "*"
 log = "0.4.17"
 time = { version = "0.3.41", features = ["local-offset"] }
+futures = { version = "*" }
