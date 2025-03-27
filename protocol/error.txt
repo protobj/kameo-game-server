@@ -1,0 +1,3 @@
+LoginError=[1001,1100]
+StoreError=[1101,1200]
+BaseError=[601,1000]

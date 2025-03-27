@@ -1,7 +1,5 @@
 syntax = "proto3";
 
-package cmd;
-
 //把请求分为
 // REQ：表示客户端发送的请求
 // RSP：表示服务器返回的响应
@@ -10,10 +8,9 @@ package cmd;
 //服务器内部发送的消息除了带上面的请求外，还有服务器指向服务器的标记，谁发给谁的必须要在消息名上体现
 //比如说 PlayerLoginGate2LoginReq,表示网关发给登录服的请求
 //举个简单的登录例子，首先是从PlayerLoginReq到PlayerLoginGate2LoginReq再到PlayerLoginGate2LoginRsp再到PlayerLoginRsp
-enum PB_CMD {
-  NONE = 0;//CMD开始头
-  LOGIN_REQ = 1;//LoginInfo,客户端登陆消息
-  LOGIN_ACK = 2;//UserInfo,登录响应
-  LOGOUT_REQ = 3;//NullMsg,登出请求
-  LOGOUT_ACK = 4;//NullMsg,玩家登出
+package base;
+
+message Empty {
+
 }
+

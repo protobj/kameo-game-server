@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package store_cmd;
+
+
+
+enum StoreCmd{
+  StoreCmdNone = 0;
+  CmdStoreInfoReq = 1101;
+  CmdStoreInfoRsp = 1102;
+}
+
+enum StoreError{
+  StoreErrorNode = 0;
+  StoreErrorNotOpen = 1101;
+}

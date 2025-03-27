@@ -1,11 +1,11 @@
-use crate::Node;
 use crate::gate::session::ClientSession;
+use crate::Node;
 use common::config::{GateServerConfig, GlobalConfig, ServerRoleId};
 use kameo::actor::{ActorRef, PreparedActor, WeakActorRef};
 use kameo::error::ActorStopReason;
 use kameo::mailbox::unbounded::UnboundedMailbox;
 use kameo::message::{Context, Message};
-use kameo::{Actor, RemoteActor, remote_message};
+use kameo::{remote_message, Actor, RemoteActor};
 use network::tcp::listener::Listener;
 use network::tcp::session::TcpSession;
 use network::websocket::session::WsSession;
@@ -14,6 +14,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 use std::sync::Arc;
 
+pub mod message;
 pub mod session;
 
 pub struct GateNode {
@@ -235,21 +236,5 @@ impl MessageHandler for WebSocketMessageHandler {
     ) {
         let session = &mut self.gate_session;
         session.handle_message(logic_message).await;
-    }
-}
-#[derive(Serialize, Deserialize)]
-pub enum GateMessage {
-    Hello,
-}
-#[remote_message("gate-message")]
-impl Message<GateMessage> for GateActor {
-    type Reply = String;
-
-    fn handle(
-        &mut self,
-        msg: GateMessage,
-        ctx: &mut Context<Self, Self::Reply>,
-    ) -> impl Future<Output = Self::Reply> + Send {
-        async { String::from("hahahaah") }
     }
 }

@@ -1564,6 +1564,8 @@ dependencies = [
  "kameo",
  "log",
  "network",
+ "prost",
+ "protocol",
  "serde",
  "thiserror 1.0.69",
  "tokio",
@@ -2553,6 +2555,7 @@ version = "0.1.0"
 dependencies = [
  "prost",
  "prost-build",
+ "regex",
 ]
 
 [[package]]
@@ -2561,7 +2564,6 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "common",
- "crossbeam-utils",
  "futures",
  "lib",
  "tokio",

@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package base_cmd;
+
+enum BaseCmd {
+    BaseCmdNone = 0;
+    CmdErrorRsp = 601;
+}
+
+
+enum BaseError {
+    BaseErrorNone = 0;
+    ServerInternalError = 601;
+    UnknownCommandError = 602;
+}
+
+message ErrorRsp {
+    base_cmd.BaseError code = 1;
+    string message = 2;
+}

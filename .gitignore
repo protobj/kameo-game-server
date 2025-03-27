@@ -5,3 +5,5 @@
 /database/kvrocks/data
 /database/kvrocks/log
 ./logs
+/protocol/src/client/cmd.proto
+/protocol/src/client/error.proto

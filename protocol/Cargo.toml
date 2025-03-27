@@ -5,5 +5,7 @@ edition = "2024"
 
 [dependencies]
 prost = { workspace = true }
+
 [build-dependencies]
 prost-build = { workspace = true }
+regex = "1.11.1"

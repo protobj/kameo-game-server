@@ -1,5 +1,5 @@
+use crate::gate::{message::GateMessage, GateActor, GateActorError};
 use crate::Node;
-use crate::gate::{GateActor, GateActorError, GateMessage};
 use common::config::{GameServerConfig, GlobalConfig, ServerRoleId};
 use kameo::actor::{ActorRef, RemoteActorRef};
 use kameo::mailbox::unbounded::UnboundedMailbox;
@@ -106,7 +106,7 @@ impl Actor for GameActor {
                 .unwrap();
             tracing::info!("connect gate :{:?}", remote_gate_ref);
             let result = remote_gate_ref.ask(&GateMessage::Hello).await;
-            tracing::info!("gate:{} reply:{:?}", name,result);
+            tracing::info!("gate:{} reply:{:?}", name, result);
         }
         Ok(())
     }

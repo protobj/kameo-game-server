@@ -35,6 +35,8 @@ pub struct LogicMessage {
     pub bytes: Bytes,
 }
 
+
+
 impl<'a> From<&'a [u8]> for LogicMessage {
     fn from(value: &'a [u8]) -> Self {
         let ix = u32::from_le_bytes([value[0], value[1], value[2], value[3]]);

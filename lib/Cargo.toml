@@ -15,3 +15,5 @@ network = { path = "../network" }
 thiserror = { workspace = true }
 log = "0.4.26"
 serde = { workspace = true }
+protocol = { path = "../protocol" }
+prost = { workspace = true }
