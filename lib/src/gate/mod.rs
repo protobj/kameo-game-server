@@ -1,27 +1,18 @@
 use crate::Node;
-use crate::game::GameActor;
 use crate::gate::session::ClientSession;
-use anyhow::Context;
-use common::config::ServerRole::Gate;
 use common::config::{GateServerConfig, GlobalConfig, ServerRoleId};
 use kameo::actor::{ActorRef, PreparedActor, WeakActorRef};
 use kameo::error::ActorStopReason;
 use kameo::mailbox::unbounded::UnboundedMailbox;
-use kameo::remote::ActorSwarm;
-use kameo::remote::dial_opts::DialOpts;
-use kameo::reply::ReplyError;
-use kameo::{Actor, RemoteActor};
-use network::tcp::listener;
+use kameo::message::{Context, Message};
+use kameo::{Actor, RemoteActor, remote_message};
 use network::tcp::listener::Listener;
 use network::tcp::session::TcpSession;
 use network::websocket::session::WsSession;
 use network::{LogicMessage, MessageHandler};
-use std::fmt::{Display, format};
-use std::io;
-use std::num::TryFromIntError;
+use serde::{Deserialize, Serialize};
+use std::fmt::Display;
 use std::sync::Arc;
-use std::time::Duration;
-use thiserror::Error;
 
 pub mod session;
 
@@ -51,16 +42,11 @@ impl Node for GateNode {
             Some(x) => x,
         };
 
-        //启动集群
-        let listener_id = ActorSwarm::bootstrap()
-            .expect(format!("actor_swarm bootstrap failed :{}", role_id).as_str())
-            .listen_on((gate_config.in_address).parse()?)
-            .await?;
-        tracing::info!(
-            "actor_swarm listening addr:{} id:{}",
-            gate_config.in_address,
-            listener_id
-        );
+        self.start_actor_swarm(
+            gate_config.in_address.clone(),
+            global_config.find_all_in_address(),
+        )
+        .await?;
         //集群启动好后,启动GateActor
         let gate_ref = kameo::spawn(GateActor::new(global_config, role_id, gate_config));
         let result = gate_ref.wait_startup_result().await;
@@ -249,5 +235,21 @@ impl MessageHandler for WebSocketMessageHandler {
     ) {
         let session = &mut self.gate_session;
         session.handle_message(logic_message).await;
+    }
+}
+#[derive(Serialize, Deserialize)]
+pub enum GateMessage {
+    Hello,
+}
+#[remote_message("gate-message")]
+impl Message<GateMessage> for GateActor {
+    type Reply = String;
+
+    fn handle(
+        &mut self,
+        msg: GateMessage,
+        ctx: &mut Context<Self, Self::Reply>,
+    ) -> impl Future<Output = Self::Reply> + Send {
+        async { String::from("hahahaah") }
     }
 }

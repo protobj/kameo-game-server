@@ -74,11 +74,43 @@ impl GlobalConfig {
     pub fn find_world_config(&self, id: u32) -> Option<WorldServerConfig> {
         return self.world.iter().find(|g| g.id == id).cloned();
     }
-    pub fn find_player_config(&self, id: u32) -> Option<GameServerConfig> {
+    pub fn find_game_config(&self, id: u32) -> Option<GameServerConfig> {
         return self.game.iter().find(|g| g.id == id).cloned();
     }
     pub fn find_all_login_config(&self) -> Vec<LoginServerConfig> {
         return self.login.clone();
+    }
+    pub fn find_all_in_address(&self) -> Vec<String> {
+        let mut addresses = vec![];
+        self.login.iter().for_each(|g| {
+            addresses.push(g.in_address.clone());
+        });
+        self.world.iter().for_each(|g| {
+            addresses.push(g.in_address.clone());
+        });
+        self.game.iter().for_each(|g| {
+            addresses.push(g.in_address.clone());
+        });
+        self.gate.iter().for_each(|g| {
+            addresses.push(g.in_address.clone());
+        });
+        addresses
+    }
+
+    pub fn login(&self) -> &Vec<LoginServerConfig> {
+        &self.login
+    }
+
+    pub fn gate(&self) -> &Vec<GateServerConfig> {
+        &self.gate
+    }
+
+    pub fn world(&self) -> &Vec<WorldServerConfig> {
+        &self.world
+    }
+
+    pub fn game(&self) -> &Vec<GameServerConfig> {
+        &self.game
     }
 }
 
@@ -149,6 +181,11 @@ pub struct GateServerConfig {
     pub in_address: String,
     pub out_tcp_port: u16,
     pub out_ws_port: u16,
+}
+impl GateServerConfig {
+    pub fn unique_name(&self) -> String {
+        return format!("{}-{}", ServerRole::Gate, self.id);
+    }
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]

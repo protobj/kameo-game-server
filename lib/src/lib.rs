@@ -1,11 +1,13 @@
 use common::config::ServerRoleId;
+use kameo::remote::ActorSwarm;
+use kameo::remote::dial_opts::DialOpts;
 use std::ops::Deref;
 use tokio::sync::watch::Receiver;
 
-pub mod game;
-pub mod gate;
-pub mod login;
-pub mod world;
+mod game;
+mod gate;
+mod login;
+mod world;
 
 pub enum Signal {
     None,
@@ -45,4 +47,42 @@ pub trait Node: Send + Sync {
     async fn stop(&mut self) -> anyhow::Result<()>;
 
     fn server_role_id(&self) -> ServerRoleId;
+
+    async fn start_actor_swarm(
+        &self,
+        self_address: String,
+        other_addresses: Vec<String>,
+    ) -> anyhow::Result<()> {
+        //启动集群
+        let role_id = self.server_role_id();
+        let actor_swarm = ActorSwarm::bootstrap()
+            .expect(format!("actor_swarm bootstrap failed :{}", role_id).as_str());
+        let listener_id = actor_swarm.listen_on(self_address.parse()?).await?;
+        tracing::info!(
+            "ActorSwarm[{}] listening addr:{} id:{}",
+            role_id,
+            self_address,
+            listener_id
+        );
+        //连接其他地址
+        for other_addr in other_addresses {
+            if other_addr == self_address {
+                continue;
+            }
+            actor_swarm
+                .dial(
+                    DialOpts::unknown_peer_id()
+                        .address(other_addr.parse()?)
+                        .build(),
+                )
+                .await?;
+        }
+        Ok(())
+    }
+}
+pub mod prelude {
+    pub use crate::game::GameNode;
+    pub use crate::gate::GateNode;
+    pub use crate::login::LoginNode;
+    pub use crate::world::WorldNode;
 }
