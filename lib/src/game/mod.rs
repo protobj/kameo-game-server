@@ -2,7 +2,6 @@ use crate::gate::{message::GateMessage, GateActor, GateActorError};
 use crate::Node;
 use common::config::{GameServerConfig, GlobalConfig, ServerRoleId};
 use kameo::actor::{ActorRef, RemoteActorRef};
-use kameo::mailbox::unbounded::UnboundedMailbox;
 use kameo::{Actor, RemoteActor};
 use std::fmt::{Display, Formatter};
 use std::sync::Arc;
@@ -85,7 +84,6 @@ impl Node for GameNode {
     }
 }
 impl Actor for GameActor {
-    type Mailbox = UnboundedMailbox<Self>;
     type Error = GameActorError;
 
     async fn on_start(&mut self, actor_ref: ActorRef<Self>) -> Result<(), Self::Error> {

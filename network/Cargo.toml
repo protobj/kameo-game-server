@@ -14,9 +14,9 @@ path = "examples/websocket.rs"
 
 [dependencies]
 anyhow = { workspace = true }
-kameo = { version = "*" }
+kameo = { workspace = true }
 tokio = { workspace = true }
 bytes = { workspace = true }
-tokio-tungstenite = "*"
 futures-util = { version = "0.3.28", default-features = false, features = ["sink", "std"] }
 tracing = { workspace = true }
+fastwebsockets = { version = "0.10.0", features = ["unstable-split"] }

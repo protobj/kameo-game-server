@@ -1,13 +1,13 @@
 use bytes::Bytes;
-use kameo::actor;
-use kameo::actor::ActorRef;
 // use kameo::remote::ActorSwarm;
 // use kameo::remote::dial_opts::DialOpts;
 use futures_util::StreamExt;
+use kameo::actor;
+use kameo::actor::ActorRef;
 use network::tcp::listener::Listener;
 use network::tcp::session::TcpSession;
 use network::websocket::session::WsSession;
-use network::{LogicMessage, MessageHandler, SessionMessage};
+use network::{MessageHandler, Package, SessionMessage};
 use std::ptr::read;
 use std::{pin::Pin, time::Duration};
 use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader};
@@ -22,7 +22,7 @@ async fn main() -> anyhow::Result<()> {
         async fn message_read(
             &mut self,
             actor_ref: ActorRef<Self::Actor>,
-            logic_message: LogicMessage,
+            logic_message: Package,
         ) {
             actor_ref
                 .tell(SessionMessage::Write(logic_message))
@@ -50,7 +50,7 @@ async fn main() -> anyhow::Result<()> {
     let (reader, mut writer) = stream.into_split();
 
     let mut reader = BufReader::new(reader);
-    let (tx, mut rx) = mpsc::channel::<LogicMessage>(10);
+    let (tx, mut rx) = mpsc::channel::<Package>(10);
 
     // Spawn task to read from stdin
     tokio::spawn(async move {
@@ -58,12 +58,12 @@ async fn main() -> anyhow::Result<()> {
         let mut stdin_reader = BufReader::new(stdin).lines();
 
         while let Ok(Some(line)) = stdin_reader.next_line().await {
-            let message = LogicMessage {
-                cmd: 10,
-                ix: 20,
-                bytes: Bytes::from(line),
-            };
-            tx.send(message).await.unwrap();
+            // let message = Package {
+            //     cmd: 10,
+            //     ix: 20,
+            //     bytes: Bytes::from(line),
+            // };
+            // tx.send(message).await.unwrap();
         }
     });
 
@@ -83,7 +83,7 @@ async fn main() -> anyhow::Result<()> {
                 eprintln!("Failed to read message.");
                 break;
             }
-            println!("Received: {:?}", LogicMessage::from(buffer.as_slice()));
+            // println!("Received: {:?}", Package::from(buffer.as_slice()));
         }
     });
 

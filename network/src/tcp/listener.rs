@@ -2,7 +2,6 @@ use crate::{NetworkPort, NetworkStreamInfo, SessionMessage};
 use kameo::Actor;
 use kameo::actor::{ActorRef, WeakActorRef};
 use kameo::error::ActorStopReason;
-use kameo::mailbox::unbounded::UnboundedMailbox;
 use kameo::message::Message;
 use std::pin::Pin;
 use std::sync::Arc;
@@ -43,7 +42,6 @@ impl<T: Actor + Message<SessionMessage>> Listener<T> {
 }
 
 impl<T: Actor + Message<SessionMessage>> Actor for Listener<T> {
-    type Mailbox = UnboundedMailbox<Self>;
     type Error = anyhow::Error;
 
     async fn on_start(&mut self, actor_ref: ActorRef<Self>) -> Result<(), Self::Error> {
@@ -90,8 +88,8 @@ impl<T: Actor + Message<SessionMessage>> Actor for Listener<T> {
 
     async fn on_stop(
         &mut self,
-        actor_ref: WeakActorRef<Self>,
-        reason: ActorStopReason,
+        _actor_ref: WeakActorRef<Self>,
+        _reason: ActorStopReason,
     ) -> Result<(), Self::Error> {
         if let Some(handle) = self.join_handle.take() {
             handle.abort();

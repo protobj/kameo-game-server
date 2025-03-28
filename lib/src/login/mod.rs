@@ -2,7 +2,6 @@ use crate::Node;
 use common::config::{GlobalConfig, LoginServerConfig, ServerRoleId};
 use kameo::Actor;
 use kameo::actor::ActorRef;
-use kameo::mailbox::unbounded::UnboundedMailbox;
 use std::fmt::{Display, Formatter};
 use std::sync::Arc;
 
@@ -84,7 +83,6 @@ impl LoginActor {
 }
 
 impl Actor for LoginActor {
-    type Mailbox = UnboundedMailbox<Self>;
     type Error = LoginActorError;
 }
 #[derive(Debug, Clone)]

@@ -1,13 +1,12 @@
-use bytes::Bytes;
-use futures_util::{SinkExt, StreamExt};
+use bytes::{Buf, BytesMut};
+use fastwebsockets::{Frame, OpCode, Payload, Role, WebSocket, WebSocketError};
 use kameo::actor::ActorRef;
 use network::tcp::listener::Listener;
 use network::websocket::session::WsSession;
-use network::{LogicMessage, MessageHandler, SessionMessage};
+use network::{MessageHandler, Package, PackageType, SessionMessage};
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::net::TcpStream;
 use tokio::sync::mpsc;
-use tokio_tungstenite::tungstenite::Message;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -18,7 +17,7 @@ async fn main() -> anyhow::Result<()> {
         fn message_read(
             &mut self,
             actor_ref: ActorRef<Self::Actor>,
-            logic_message: LogicMessage,
+            logic_message: Package,
         ) -> impl Future<Output = ()> + Send {
             async move {
                 actor_ref
@@ -37,13 +36,14 @@ async fn main() -> anyhow::Result<()> {
     server_ref.wait_startup().await;
     // tokio::signal::ctrl_c().await?;
     let request = "ws://127.0.0.1:3456";
-    let ws_socket = tokio_tungstenite::connect_async(request).await?;
-    let ws_socket = ws_socket.0;
+    let stream = TcpStream::connect(request).await?;
+
+    let socket = WebSocket::after_handshake(stream, Role::Client);
     println!("Connected {}", request);
 
-    let (mut writer, mut reader) = ws_socket.split();
+    let (mut reader, mut writer) = socket.split(tokio::io::split);
 
-    let (tx, mut rx) = mpsc::channel::<LogicMessage>(10);
+    let (tx, mut rx) = mpsc::channel::<Package>(10);
 
     // Spawn task to read from stdin
     tokio::spawn(async move {
@@ -51,35 +51,61 @@ async fn main() -> anyhow::Result<()> {
         let mut stdin_reader = BufReader::new(stdin).lines();
 
         while let Ok(Some(line)) = stdin_reader.next_line().await {
-            let message = LogicMessage {
-                cmd: 10,
-                ix: 20,
-                bytes: Bytes::from(line),
-            };
-            tx.send(message).await.unwrap();
+            tx.send(Package::new_control(PackageType::Handshake))
+                .await
+                .unwrap();
         }
     });
 
     // Spawn task to read from socket
     tokio::spawn(async move {
         loop {
-            let message = reader.next().await.unwrap().unwrap();
-            match message {
-                Message::Text(_) => {}
-                Message::Binary(bytes) => {
-                    println!("Received: {:?}", LogicMessage::from(bytes.as_ref()));
-                }
-                Message::Ping(_) => {}
-                Message::Pong(_) => {}
-                Message::Close(_) => {}
-                Message::Frame(_) => {}
+            let result = reader
+                .read_frame::<_, WebSocketError>(&mut move |_| async {
+                    // match frame.opcode {
+                    //     OpCode::Continuation => {}
+                    //     OpCode::Text => {}
+                    //     OpCode::Binary => {}
+                    //     OpCode::Close => {}
+                    //     OpCode::Ping => {}
+                    //     OpCode::Pong => {}
+                    // }
+                    unreachable!();
+                })
+                .await;
+            match result {
+                Ok(mut frame) => match frame.opcode {
+                    OpCode::Continuation => {}
+                    OpCode::Text => {}
+                    OpCode::Binary => {
+                        let x = frame.payload.to_mut();
+                        let mut bytes = BytesMut::with_capacity(x.len());
+                        bytes.copy_from_slice(x);
+
+                        let typ = bytes.get_u8();
+                        let typ = PackageType::from_u8(typ).unwrap();
+                        let pack = if bytes.len() > 0 {
+                            Package::new_data(typ, bytes.as_ref())
+                        } else {
+                            Package::new_control(typ)
+                        };
+
+                        println!("Received: {:?}", pack);
+                    }
+                    OpCode::Close => {}
+                    OpCode::Ping => {}
+                    OpCode::Pong => {}
+                },
+                Err(_) => {}
             }
         }
     });
 
     // Handle sending messages to the server
     while let Some(msg) = rx.recv().await {
-        writer.send(Message::Binary(msg.to_bytes())).await.unwrap();
+        writer
+            .write_frame(Frame::binary(Payload::Borrowed(msg.to_bytes().as_ref())))
+            .await?;
     }
     tokio::signal::ctrl_c().await?;
     Ok(())

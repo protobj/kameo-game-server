@@ -3,13 +3,12 @@ use crate::Node;
 use common::config::{GateServerConfig, GlobalConfig, ServerRoleId};
 use kameo::actor::{ActorRef, PreparedActor, WeakActorRef};
 use kameo::error::ActorStopReason;
-use kameo::mailbox::unbounded::UnboundedMailbox;
 use kameo::message::{Context, Message};
 use kameo::{remote_message, Actor, RemoteActor};
 use network::tcp::listener::Listener;
 use network::tcp::session::TcpSession;
 use network::websocket::session::WsSession;
-use network::{LogicMessage, MessageHandler};
+use network::{MessageHandler, Package};
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 use std::sync::Arc;
@@ -108,7 +107,8 @@ impl GateActor {
 
         let tcp_ref = kameo::spawn(Listener::new(port, move |info, stream| async move {
             //先初始化actor, 再spawn
-            let prepared_actor = PreparedActor::<TcpSession<TcpMessageHandler>>::new();
+            let prepared_actor =
+                PreparedActor::<TcpSession<TcpMessageHandler>>::new(kameo::mailbox::unbounded());
             let actor_ref = prepared_actor.actor_ref().clone();
             prepared_actor.spawn(TcpSession::new(
                 info,
@@ -133,7 +133,9 @@ impl GateActor {
 
         let ws_ref = kameo::spawn(Listener::new(port, move |info, stream| async move {
             //先初始化actor, 再spawn
-            let prepared_actor = PreparedActor::<WsSession<WebSocketMessageHandler>>::new();
+            let prepared_actor = PreparedActor::<WsSession<WebSocketMessageHandler>>::new(
+                kameo::mailbox::unbounded(),
+            );
             let actor_ref = prepared_actor.actor_ref().clone();
             WsSession::new(
                 info,
@@ -153,7 +155,6 @@ impl GateActor {
     }
 }
 impl Actor for GateActor {
-    type Mailbox = UnboundedMailbox<Self>;
     type Error = GateActorError;
 
     async fn on_start(&mut self, actor_ref: ActorRef<Self>) -> Result<(), Self::Error> {
@@ -214,11 +215,7 @@ pub(crate) struct TcpMessageHandler {
 }
 impl MessageHandler for TcpMessageHandler {
     type Actor = TcpSession<Self>;
-    async fn message_read(
-        &mut self,
-        actor_ref: ActorRef<Self::Actor>,
-        logic_message: LogicMessage,
-    ) {
+    async fn message_read(&mut self, actor_ref: ActorRef<Self::Actor>, logic_message: Package) {
         let session = &mut self.gate_session;
         session.handle_message(logic_message).await;
     }
@@ -229,11 +226,7 @@ pub(crate) struct WebSocketMessageHandler {
 }
 impl MessageHandler for WebSocketMessageHandler {
     type Actor = WsSession<Self>;
-    async fn message_read(
-        &mut self,
-        actor_ref: ActorRef<Self::Actor>,
-        logic_message: LogicMessage,
-    ) {
+    async fn message_read(&mut self, actor_ref: ActorRef<Self::Actor>, logic_message: Package) {
         let session = &mut self.gate_session;
         session.handle_message(logic_message).await;
     }

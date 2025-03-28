@@ -1,8 +1,7 @@
 use crate::Node;
 use common::config::{GlobalConfig, ServerRoleId, WorldServerConfig};
-use kameo::Actor;
 use kameo::actor::ActorRef;
-use kameo::mailbox::unbounded::UnboundedMailbox;
+use kameo::Actor;
 use std::fmt::{Display, Formatter};
 use std::sync::Arc;
 
@@ -84,7 +83,6 @@ impl WorldActor {
 }
 
 impl Actor for WorldActor {
-    type Mailbox = UnboundedMailbox<Self>;
     type Error = WorldActorError;
 }
 #[derive(Debug, Clone)]

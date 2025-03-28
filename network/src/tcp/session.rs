@@ -1,9 +1,11 @@
-use crate::{LogicMessage, MessageHandler, NetworkStreamInfo, SessionMessage};
+use crate::{
+    MessageHandler, NetworkStreamInfo, Package, PackageType, SessionMessage, bytes_to_usize,
+};
 use kameo::Actor;
 use kameo::actor::{ActorRef, WeakActorRef};
 use kameo::error::ActorStopReason;
-use kameo::mailbox::unbounded::UnboundedMailbox;
 use kameo::message::{Context, Message};
+use std::io;
 use std::io::ErrorKind;
 use std::net::SocketAddr;
 use tokio::io::{AsyncReadExt, AsyncWriteExt, BufReader, BufWriter};
@@ -13,7 +15,7 @@ use tokio::task::JoinHandle;
 
 pub struct TcpSession<H>
 where
-    H: MessageHandler<Actor= Self>,
+    H: MessageHandler<Actor = Self>,
 {
     network_stream_info: NetworkStreamInfo,
     network_stream: Option<TcpStream>,
@@ -24,7 +26,7 @@ where
 
 impl<H> TcpSession<H>
 where
-    H: MessageHandler<Actor= Self>,
+    H: MessageHandler<Actor = Self>,
 {
     pub fn new(
         network_stream_info: NetworkStreamInfo,
@@ -47,8 +49,7 @@ where
         self.network_stream_info.peer_addr
     }
 }
-impl<T: MessageHandler<Actor= Self>> Actor for TcpSession<T> {
-    type Mailbox = UnboundedMailbox<Self>;
+impl<T: MessageHandler<Actor = Self>> Actor for TcpSession<T> {
     type Error = anyhow::Error;
 
     async fn on_start(&mut self, actor_ref: ActorRef<Self>) -> Result<(), Self::Error> {
@@ -63,7 +64,7 @@ impl<T: MessageHandler<Actor= Self>> Actor for TcpSession<T> {
     }
 }
 
-impl<H: MessageHandler<Actor= Self>> Message<SessionMessage> for TcpSession<H> {
+impl<H: MessageHandler<Actor = Self>> Message<SessionMessage> for TcpSession<H> {
     type Reply = ();
 
     async fn handle(
@@ -105,49 +106,22 @@ impl<T: Actor + Message<SessionMessage>> Reader<T> {
 }
 
 impl<T: Actor + Message<SessionMessage>> Actor for Reader<T> {
-    type Mailbox = UnboundedMailbox<Self>;
-    type Error = anyhow::Error;
+    type Error = io::Error;
 
     async fn on_start(&mut self, actor_ref: ActorRef<Self>) -> Result<(), Self::Error> {
         let mut read_half = self.reader.take().unwrap();
         let session_ref = self.session_ref.clone();
         let handle = tokio::task::spawn(async move {
             loop {
-                match read_half.read_u32().await {
-                    Ok(length) => {
-                        tracing::trace!("Payload length message ({length}) received");
-                        match read_n_bytes(&mut read_half, length as usize).await {
-                            Ok(buf) => {
-                                tracing::trace!("Payload of length({}) received", buf.len());
-                                // NOTE: Our implementation writes 2 messages when sending something over the wire, the first
-                                // is exactly 8 bytes which constitute the length of the payload message (u64 in big endian format),
-                                // followed by the payload. This tells our TCP reader how much data to read off the wire
-                                session_ref
-                                    .tell(SessionMessage::Read(LogicMessage::from(buf.as_slice())))
-                                    .await
-                                    .expect("tell to session_ref error");
-                            }
-                            Err(err) if err.kind() == ErrorKind::UnexpectedEof => {
-                                //关闭连接
-                                actor_ref.kill();
-                                actor_ref.wait_for_stop().await;
-                            }
-                            Err(_other_err) => {
-                                tracing::trace!("Read:Error ({_other_err:?}) on stream")
-                            }
-                        }
+                let result = parse(&mut read_half).await;
+                match result {
+                    Ok(package) => {
+                        session_ref
+                            .tell(SessionMessage::Read(package))
+                            .await
+                            .expect("TODO: panic message");
                     }
-                    Err(err) if err.kind() == ErrorKind::UnexpectedEof => {
-                        tracing::trace!("Error (EOF) on stream");
-                        // EOF, close the stream by dropping the stream
-                        //关闭连接
-                        actor_ref.kill();
-                        actor_ref.wait_for_stop().await;
-                    }
-                    Err(_other_err) => {
-                        tracing::trace!("WaitFor:Error ({_other_err:?}) on stream")
-                        // some other TCP error, more handling necessary
-                    }
+                    Err(e) => {}
                 }
             }
         });
@@ -167,6 +141,33 @@ impl<T: Actor + Message<SessionMessage>> Actor for Reader<T> {
     }
 }
 
+async fn parse(reader: &mut BufReader<OwnedReadHalf>) -> anyhow::Result<Package> {
+    let r#type = reader.read_u8().await?;
+    let option = PackageType::from_u8(r#type);
+    let r#type = if let Some(option) = option {
+        option
+    } else {
+        anyhow::bail!("invalid option type: {}", r#type);
+    };
+    match r#type {
+        PackageType::Handshake
+        | PackageType::HandshakeAck
+        | PackageType::Heartbeat
+        | PackageType::Kick => Ok(Package::new_control(r#type)),
+        PackageType::Request
+        | PackageType::Response
+        | PackageType::ResponseError
+        | PackageType::Notify
+        | PackageType::Push => {
+            let len_buf = read_n_bytes(reader, 3).await?;
+            let length = bytes_to_usize(len_buf);
+            let contents = read_n_bytes(reader, length).await?;
+            tracing::trace!("Payload length message ({length}) received");
+            Ok(Package::new_data(r#type, contents.as_slice()))
+        }
+    }
+}
+
 struct Writer {
     writer: BufWriter<OwnedWriteHalf>,
 }
@@ -178,10 +179,9 @@ impl Writer {
     }
 }
 impl Actor for Writer {
-    type Mailbox = UnboundedMailbox<Self>;
     type Error = anyhow::Error;
 }
-struct Write(pub LogicMessage);
+struct Write(pub Package);
 
 impl Message<Write> for Writer {
     type Reply = anyhow::Result<()>;
@@ -189,22 +189,17 @@ impl Message<Write> for Writer {
     async fn handle(&mut self, msg: Write, ctx: &mut Context<Self, Self::Reply>) -> Self::Reply {
         let message = msg.0;
 
-        let bytes = LogicMessage::to_bytes(&message);
+        let bytes = Package::to_bytes(message);
+
         let stream = &mut self.writer;
-        if let Err(write_err) = stream.write_u32(bytes.len() as u32).await {
+        if let Err(write_err) = stream.write_all(&bytes).await {
             tracing::warn!("Error writing to the stream '{}'", write_err);
-        } else {
-            tracing::trace!("Wrote length, writing payload (len={})", bytes.len());
-            // now send the frame
-            if let Err(write_err) = stream.write_all(&bytes).await {
-                tracing::warn!("Error writing to the stream '{}'", write_err);
-                let actor_ref = ctx.actor_ref();
-                actor_ref.kill();
-                actor_ref.wait_for_stop().await;
-            }
-            // flush the stream
-            stream.flush().await?;
+            let actor_ref = ctx.actor_ref();
+            actor_ref.stop_gracefully().await?;
+            actor_ref.wait_for_stop().await;
+            return Ok(());
         }
+        stream.flush().await?;
         Ok(())
     }
 }

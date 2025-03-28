@@ -1,12 +1,13 @@
 use crate::gate::{TcpMessageHandler, WebSocketMessageHandler};
 use kameo::actor::ActorRef;
-use network::LogicMessage;
+use network::Package;
 use network::tcp::session::TcpSession;
 use network::websocket::session::WsSession;
 use prost::Message;
 use prost::bytes::BytesMut;
 use protocol::base_cmd::BaseError;
 use std::fmt::{Debug, Display, Formatter, Write};
+use std::io;
 
 pub struct ClientSession {
     pub(self) ws_session_ref: Option<ActorRef<WsSession<WebSocketMessageHandler>>>,
@@ -32,39 +33,33 @@ impl ClientSession {
         }
     }
 }
-fn new_logic_message<T: Message>(cmd: u16, ix: u32, message: T) -> anyhow::Result<LogicMessage> {
+fn new_logic_message<T: Message>(cmd: u16, ix: u32, message: T) -> anyhow::Result<Package> {
     let mut bytes_mut = BytesMut::new();
     message
         .encode(&mut bytes_mut)
         .map_err(|e| anyhow::anyhow!(e))?;
-    Ok(LogicMessage {
-        cmd,
-        ix,
-        bytes: bytes_mut.freeze(),
-    })
+    Err(io::ErrorKind::InvalidData.into())
 }
 
 impl ClientSession {
     pub(crate) async fn handle_message(
         &mut self,
-        logic_message: LogicMessage,
-    ) -> anyhow::Result<Option<LogicMessage>> {
-        let cmd = logic_message.cmd as i32;
-
-        let cmd = protocol::cmd::Cmd::try_from(cmd);
-        let cmd = match cmd {
-            Ok(x) => x,
-            Err(e) => {
-                return Ok(Some(new_logic_message(
-                    1,
-                    logic_message.ix,
-                    protocol::base_cmd::ErrorRsp {
-                        code: BaseError::UnknownCommandError as i32,
-                        message: BaseError::UnknownCommandError.as_str_name().to_string(),
-                    },
-                )?));
-            }
-        };
+        package: Package,
+    ) -> anyhow::Result<Option<Package>> {
+        // let cmd = protocol::cmd::Cmd::try_from(cmd);
+        // let cmd = match cmd {
+        //     Ok(x) => x,
+        //     Err(e) => {
+        //         return Ok(Some(new_logic_message(
+        //             1,
+        //             package.ix,
+        //             protocol::base_cmd::ErrorRsp {
+        //                 code: BaseError::UnknownCommandError as i32,
+        //                 message: BaseError::UnknownCommandError.as_str_name().to_string(),
+        //             },
+        //         )?));
+        //     }
+        // };
 
         Ok(None)
     }

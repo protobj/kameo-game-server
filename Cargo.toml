@@ -34,7 +34,7 @@ prost = "*"
 prost-build = "*"
 serde = "*"
 async-trait = "*"
-kameo = { version = "0.15", features = ["remote"] }
+kameo = { git = "https://github.com/tqwewe/kameo.git", features = ["remote"] }
 thiserror = "*"
 tracing = "*"
 tracing-subscriber = { version = "*", features = ["local-time", "env-filter", "tracing-log"] }
@@ -42,7 +42,7 @@ tracing-appender = "*"
 log = "0.4.17"
 time = { version = "0.3.41", features = ["local-offset"] }
 futures = { version = "*" }
-
+bitflags = { version = "2.7.x", features = ["serde"] }
 
 
 [profile.dev]
