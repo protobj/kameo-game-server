@@ -1,10 +1,10 @@
-use crate::gate::session::ClientSession;
 use crate::Node;
+use crate::gate::session::ClientSession;
 use common::config::{GateServerConfig, GlobalConfig, ServerRoleId};
 use kameo::actor::{ActorRef, PreparedActor, WeakActorRef};
 use kameo::error::ActorStopReason;
 use kameo::message::{Context, Message};
-use kameo::{remote_message, Actor, RemoteActor};
+use kameo::{Actor, RemoteActor, remote_message};
 use network::tcp::listener::Listener;
 use network::tcp::session::TcpSession;
 use network::websocket::session::WsSession;
@@ -14,8 +14,7 @@ use std::fmt::Display;
 use std::sync::Arc;
 
 pub mod message;
-pub mod session;
-
+pub mod server;
 pub struct GateNode {
     global_config: Arc<GlobalConfig>,
     role_id: ServerRoleId,
@@ -217,7 +216,10 @@ impl MessageHandler for TcpMessageHandler {
     type Actor = TcpSession<Self>;
     async fn message_read(&mut self, actor_ref: ActorRef<Self::Actor>, logic_message: Package) {
         let session = &mut self.gate_session;
-        session.handle_message(logic_message).await;
+        session
+            .handle_message(logic_message)
+            .await
+            .expect("TODO: panic message");
     }
 }
 
@@ -228,6 +230,9 @@ impl MessageHandler for WebSocketMessageHandler {
     type Actor = WsSession<Self>;
     async fn message_read(&mut self, actor_ref: ActorRef<Self::Actor>, logic_message: Package) {
         let session = &mut self.gate_session;
-        session.handle_message(logic_message).await;
+        session
+            .handle_message(logic_message)
+            .await
+            .expect("TODO: panic message");
     }
 }
