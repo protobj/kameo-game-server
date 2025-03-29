@@ -15,7 +15,7 @@ crossbeam = "*"
 arc-swap = { workspace = true }
 clap = { workspace = true, features = ["derive"] }
 toml = "*"
-serde = { version = "*", features = ["derive"] }
+serde = { workspace = true }
 bytes = { workspace = true }
 tokio = { workspace = true }
 kameo = { workspace = true }

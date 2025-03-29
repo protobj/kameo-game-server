@@ -1,20 +1,19 @@
 use crate::Node;
-use crate::gate::session::ClientSession;
+use crate::gate::server::{NetServer, NetServerSignal};
 use common::config::{GateServerConfig, GlobalConfig, ServerRoleId};
 use kameo::actor::{ActorRef, PreparedActor, WeakActorRef};
 use kameo::error::ActorStopReason;
 use kameo::message::{Context, Message};
 use kameo::{Actor, RemoteActor, remote_message};
-use network::tcp::listener::Listener;
-use network::tcp::session::TcpSession;
-use network::websocket::session::WsSession;
-use network::{MessageHandler, Package};
+use message_io::node::{NodeHandler, NodeTask};
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 use std::sync::Arc;
 
-pub mod message;
 pub mod server;
+pub mod packet;
+pub mod client;
+pub mod server_message;
 pub struct GateNode {
     global_config: Arc<GlobalConfig>,
     role_id: ServerRoleId,
@@ -79,8 +78,8 @@ pub struct GateActor {
     global_config: Arc<GlobalConfig>,
     role_id: ServerRoleId,
     gate_config: GateServerConfig,
-    tcp_ref: Option<ActorRef<Listener<TcpSession<TcpMessageHandler>>>>,
-    ws_ref: Option<ActorRef<Listener<WsSession<WebSocketMessageHandler>>>>,
+    node_task: Option<(NodeTask, NodeHandler<NetServerSignal>)>,
+    
 }
 
 impl GateActor {
@@ -93,64 +92,8 @@ impl GateActor {
             role_id,
             global_config,
             gate_config,
-            tcp_ref: None,
-            ws_ref: None,
+            node_task: None,
         }
-    }
-
-    async fn listen_tcp(&mut self) -> Option<ActorRef<Listener<TcpSession<TcpMessageHandler>>>> {
-        let port = self.gate_config.out_tcp_port;
-        if port == 0 {
-            return None;
-        }
-
-        let tcp_ref = kameo::spawn(Listener::new(port, move |info, stream| async move {
-            //先初始化actor, 再spawn
-            let prepared_actor =
-                PreparedActor::<TcpSession<TcpMessageHandler>>::new(kameo::mailbox::unbounded());
-            let actor_ref = prepared_actor.actor_ref().clone();
-            prepared_actor.spawn(TcpSession::new(
-                info,
-                stream,
-                TcpMessageHandler {
-                    gate_session: ClientSession::new_tcp(Some(actor_ref.clone())),
-                },
-            ));
-            Ok(actor_ref)
-        }));
-        tcp_ref.wait_startup().await;
-        Some(tcp_ref)
-    }
-
-    async fn listen_websocket(
-        &mut self,
-    ) -> Option<ActorRef<Listener<WsSession<WebSocketMessageHandler>>>> {
-        let port = self.gate_config.out_ws_port;
-        if port == 0 {
-            return None;
-        }
-
-        let ws_ref = kameo::spawn(Listener::new(port, move |info, stream| async move {
-            //先初始化actor, 再spawn
-            let prepared_actor = PreparedActor::<WsSession<WebSocketMessageHandler>>::new(
-                kameo::mailbox::unbounded(),
-            );
-            let actor_ref = prepared_actor.actor_ref().clone();
-            WsSession::new(
-                info,
-                stream,
-                WebSocketMessageHandler {
-                    gate_session: ClientSession::new_ws(Some(actor_ref.clone())),
-                },
-            )
-            .await
-            .map(move |ws_session| {
-                prepared_actor.spawn(ws_session);
-                actor_ref
-            })
-        }));
-        ws_ref.wait_startup().await;
-        Some(ws_ref)
     }
 }
 impl Actor for GateActor {
@@ -165,25 +108,30 @@ impl Actor for GateActor {
                 GateActorError::RegisterRemoteFail(e.to_string())
             })?;
         //启动监听
-        //tcp
-        self.tcp_ref = self.listen_tcp().await;
-        //websocket
-        self.ws_ref = self.listen_websocket().await;
+        let net_server = NetServer::new(
+            self.gate_config.out_tcp_port,
+            self.gate_config.out_ws_port,
+            self.gate_config.out_udp_port,
+        )
+        .map_err(|e| {
+            tracing::error!("GateActor ListenNetFail fail:{}", e);
+            GateActorError::ListenNetFail(e.to_string())
+        })?;
+
+        let node_task = net_server.run();
+        self.node_task = Some(node_task);
+        
         Ok(())
     }
     fn on_stop(
         &mut self,
-        actor_ref: WeakActorRef<Self>,
-        reason: ActorStopReason,
+        _actor_ref: WeakActorRef<Self>,
+        _reason: ActorStopReason,
     ) -> impl Future<Output = Result<(), Self::Error>> + Send {
         async {
-            if let Some(tcp_ref) = &mut self.tcp_ref {
-                tcp_ref.kill();
-                tcp_ref.wait_for_stop().await;
-            }
-            if let Some(ws_ref) = &mut self.ws_ref {
-                ws_ref.kill();
-                ws_ref.wait_for_stop().await;
+            if let Some(task) = self.node_task.take() {
+                task.1.stop();
+                drop(task.0);
             }
             Ok(())
         }
@@ -194,6 +142,7 @@ impl Actor for GateActor {
 pub enum GateActorError {
     ConnectFail(String),
     RegisterRemoteFail(String),
+    ListenNetFail(String),
 }
 
 impl Display for GateActorError {
@@ -205,34 +154,9 @@ impl Display for GateActorError {
             GateActorError::RegisterRemoteFail(s) => {
                 f.write_str(format!("RegisterRemoteFail reason:{}", s).as_str())
             }
+            GateActorError::ListenNetFail(s) => {
+                f.write_str(format!("ListenNetFail reason:{}", s).as_str())
+            }
         }
-    }
-}
-
-pub(crate) struct TcpMessageHandler {
-    gate_session: ClientSession,
-}
-impl MessageHandler for TcpMessageHandler {
-    type Actor = TcpSession<Self>;
-    async fn message_read(&mut self, actor_ref: ActorRef<Self::Actor>, logic_message: Package) {
-        let session = &mut self.gate_session;
-        session
-            .handle_message(logic_message)
-            .await
-            .expect("TODO: panic message");
-    }
-}
-
-pub(crate) struct WebSocketMessageHandler {
-    gate_session: ClientSession,
-}
-impl MessageHandler for WebSocketMessageHandler {
-    type Actor = WsSession<Self>;
-    async fn message_read(&mut self, actor_ref: ActorRef<Self::Actor>, logic_message: Package) {
-        let session = &mut self.gate_session;
-        session
-            .handle_message(logic_message)
-            .await
-            .expect("TODO: panic message");
     }
 }

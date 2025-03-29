@@ -15,6 +15,7 @@ enum BaseError {
 }
 
 message ErrorRsp {
-    base_cmd.BaseError code = 1;
-    string message = 2;
+    int32 cmd = 1;
+    base_cmd.BaseError code = 2;
+    string message = 3;
 }

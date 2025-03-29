@@ -1,11 +1,13 @@
-use crate::gate::{message::GateMessage, GateActor, GateActorError};
-use crate::Node;
+use crate::gate::{GateActor, GateActorError};
+use crate::{Gate2OtherReq, Gate2OtherRes, Node};
 use common::config::{GameServerConfig, GlobalConfig, ServerRoleId};
 use kameo::actor::{ActorRef, RemoteActorRef};
-use kameo::{Actor, RemoteActor};
+use kameo::message::{Context, Message};
+use kameo::{remote_message, Actor, RemoteActor};
 use std::fmt::{Display, Formatter};
 use std::sync::Arc;
 
+pub mod player;
 pub struct GameNode {
     global_config: Arc<GlobalConfig>,
     role_id: ServerRoleId,
@@ -94,18 +96,6 @@ impl Actor for GameActor {
                 tracing::error!("GameActor register remote fail:{}", e);
                 GameActorError::RegisterRemoteFail(e.to_string())
             })?;
-        let gate_config_list = self.global_config.gate();
-        for gate_config in gate_config_list {
-            let name = &gate_config.unique_name();
-            let remote_gate_ref = RemoteActorRef::<GateActor>::lookup(name)
-                .await
-                .map_err(|e| GameActorError::RegisterRemoteFail(e.to_string()))
-                .unwrap()
-                .unwrap();
-            tracing::info!("connect gate :{:?}", remote_gate_ref);
-            let result = remote_gate_ref.ask(&GateMessage::Hello).await;
-            tracing::info!("gate:{} reply:{:?}", name, result);
-        }
         Ok(())
     }
 }
@@ -119,6 +109,21 @@ impl Display for GameActorError {
             GameActorError::RegisterRemoteFail(x) => {
                 f.write_fmt(format_args!("Failed to register remote game config:{}", x))
             }
+        }
+    }
+}
+
+#[remote_message("Gate2OtherReq")]
+impl Message<Gate2OtherReq> for GameActor {
+    type Reply = Gate2OtherRes;
+    async fn handle(
+        &mut self,
+        msg: Gate2OtherReq,
+        ctx: &mut Context<Self, Self::Reply>,
+    ) -> Self::Reply {
+        Gate2OtherRes {
+            cmd: msg.cmd,
+            bytes: msg.bytes,
         }
     }
 }

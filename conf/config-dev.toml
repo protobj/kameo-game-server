@@ -23,6 +23,7 @@ id = 1
 in_address = "/ip4/0.0.0.0/udp/35000/quic-v1"
 out_tcp_port = 5678
 out_ws_port = 5679
+out_udp_port = 5680
 
 [[world]]
 id = 1

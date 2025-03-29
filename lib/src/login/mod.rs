@@ -1,7 +1,14 @@
-use crate::Node;
+use crate::gate::GateActorError;
+use crate::{Gate2OtherReq, Gate2OtherRes, Node};
+use bytes::Bytes;
 use common::config::{GlobalConfig, LoginServerConfig, ServerRoleId};
-use kameo::Actor;
-use kameo::actor::ActorRef;
+use kameo::actor::{ActorRef, WeakActorRef};
+use kameo::error::ActorStopReason;
+use kameo::message::{Context, Message};
+use kameo::{Actor, RemoteActor, Reply, remote_message};
+use protocol::base_cmd::ErrorRsp;
+use protocol::cmd::Cmd;
+use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 use std::sync::Arc;
 
@@ -62,6 +69,8 @@ impl Node for LoginNode {
         self.role_id.clone()
     }
 }
+
+#[derive(RemoteActor)]
 pub struct LoginActor {
     config: Arc<GlobalConfig>,
     server_role_id: ServerRoleId,
@@ -84,11 +93,41 @@ impl LoginActor {
 
 impl Actor for LoginActor {
     type Error = LoginActorError;
+
+    async fn on_start(&mut self, actor_ref: ActorRef<Self>) -> Result<(), Self::Error> {
+        actor_ref
+            .register(self.server_role_id.to_string().as_str())
+            .await
+            .map_err(|e| {
+                tracing::error!("LoginActor register remote fail:{}", e);
+                LoginActorError::RegisterRemoteFail(e.to_string())
+            })?;
+
+        Ok(())
+    }
 }
 #[derive(Debug, Clone)]
-pub enum LoginActorError {}
+pub enum LoginActorError {
+    RegisterRemoteFail(String),
+}
 impl Display for LoginActorError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.write_str("LoginActorError")
+    }
+}
+
+#[remote_message("Gate2OtherReq")]
+impl Message<Gate2OtherReq> for LoginActor {
+    type Reply = Gate2OtherRes;
+
+    async fn handle(
+        &mut self,
+        msg: Gate2OtherReq,
+        ctx: &mut Context<Self, Self::Reply>,
+    ) -> Self::Reply {
+        Gate2OtherRes {
+            cmd: msg.cmd,
+            bytes: msg.bytes,
+        }
     }
 }

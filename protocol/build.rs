@@ -45,11 +45,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     prost_build::Config::new()
         .bytes(&["."])
+        .type_attribute(".", "#[derive(serde::Serialize, serde::Deserialize)]")
         .compile_protos(&proto_files, &[base_dir])?;
     // 2. 生成 mod.rs
     let mod_path = PathBuf::from(base_dir).join("lib.rs");
     let mut mod_content = String::new();
-
+    mod_content.push_str("pub mod helper;\n");
     let modules: Vec<_> = proto_files
         .iter()
         .map(|file| {

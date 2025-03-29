@@ -10,7 +10,7 @@ tracing = { workspace = true }
 tokio = { workspace = true }
 lib = { path = "lib" }
 futures = { workspace = true }
-
+serde = { workspace = true }
 
 [workspace]
 members = [
@@ -19,7 +19,6 @@ members = [
     "resource/macros",
     "protocol",
     "common",
-    "network",
     "lib",
 ]
 resolver = "3"
@@ -30,9 +29,10 @@ clap = { version = "*", features = ["derive"] }
 anyhow = "*"
 crossbeam-utils = "*"
 bytes = "*"
-prost = "*"
-prost-build = "*"
-serde = "*"
+prost = { version = "*", features = ["default"] }
+prost-build = { version = "*", features = ["default"] }
+prost-types = { version = "*", features = ["default"] }
+serde = { version = "*", features = ["derive"] }
 async-trait = "*"
 kameo = { git = "https://github.com/tqwewe/kameo.git", features = ["remote"] }
 thiserror = "*"
@@ -43,7 +43,7 @@ log = "0.4.17"
 time = { version = "0.3.41", features = ["local-offset"] }
 futures = { version = "*" }
 bitflags = { version = "2.7.x", features = ["serde"] }
-
+integer-encoding = "4.0.2"
 
 [profile.dev]
 opt-level = 0

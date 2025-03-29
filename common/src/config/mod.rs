@@ -1,6 +1,6 @@
 use clap::ArgAction;
 use clap::{Parser, ValueEnum};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 use std::fs;
 use std::str::FromStr;
@@ -18,7 +18,7 @@ pub struct Args {
     #[arg(short, long,action = ArgAction::Append,value_parser = parse_role_id)]
     pub server: Vec<ServerRoleId>,
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug,Serialize, Deserialize)]
 pub struct ServerRoleId(pub ServerRole, pub u32);
 impl Display for ServerRoleId {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
@@ -179,8 +179,9 @@ pub struct LoginServerConfig {
 pub struct GateServerConfig {
     pub id: u32,
     pub in_address: String,
-    pub out_tcp_port: u16,
-    pub out_ws_port: u16,
+    pub out_tcp_port: Option<u16>,
+    pub out_ws_port: Option<u16>,
+    pub out_udp_port: Option<u16>,
 }
 impl GateServerConfig {
     pub fn unique_name(&self) -> String {
@@ -199,7 +200,7 @@ pub struct GameServerConfig {
     pub in_address: String,
     pub keydb: RedisConfig,
 }
-#[derive(Debug, Clone, ValueEnum, Deserialize)]
+#[derive(Debug, Clone, ValueEnum, Deserialize,Serialize)]
 pub enum ServerRole {
     Login,
     Gate,

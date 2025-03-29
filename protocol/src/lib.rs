@@ -1,3 +1,4 @@
+pub mod helper;
 pub mod base {
     include!(concat!(env!("OUT_DIR"), "/base.rs"));
 }

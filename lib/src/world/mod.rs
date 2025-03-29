@@ -1,7 +1,8 @@
-use crate::Node;
+use crate::{Gate2OtherReq, Gate2OtherRes, Node};
 use common::config::{GlobalConfig, ServerRoleId, WorldServerConfig};
 use kameo::actor::ActorRef;
-use kameo::Actor;
+use kameo::message::{Context, Message};
+use kameo::{Actor, remote_message, RemoteActor};
 use std::fmt::{Display, Formatter};
 use std::sync::Arc;
 
@@ -62,6 +63,7 @@ impl Node for WorldNode {
         self.role_id.clone()
     }
 }
+#[derive(RemoteActor)]
 pub struct WorldActor {
     config: Arc<GlobalConfig>,
     server_role_id: ServerRoleId,
@@ -90,5 +92,21 @@ pub enum WorldActorError {}
 impl Display for WorldActorError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.write_str("WorldActorError")
+    }
+}
+
+
+#[remote_message("Gate2OtherReq")]
+impl Message<Gate2OtherReq> for WorldActor {
+    type Reply = Gate2OtherRes;
+    async fn handle(
+        &mut self,
+        msg: Gate2OtherReq,
+        ctx: &mut Context<Self, Self::Reply>,
+    ) -> Self::Reply {
+        Gate2OtherRes {
+            cmd: msg.cmd,
+            bytes: msg.bytes,
+        }
     }
 }

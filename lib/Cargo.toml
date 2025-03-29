@@ -5,16 +5,15 @@ edition = "2024"
 
 [dependencies]
 common = { path = "../common" }
-crossbeam = "*"
 kameo = { workspace = true }
 tokio = { workspace = true }
 anyhow = { workspace = true }
 tracing = { workspace = true }
 async-trait = { workspace = true }
-network = { path = "../network" }
-thiserror = { workspace = true }
-log = "0.4.26"
 serde = { workspace = true }
 protocol = { path = "../protocol" }
 prost = { workspace = true }
 message-io = "*"
+bytes = { workspace = true }
+scc = "*"
+integer-encoding = { workspace = true }

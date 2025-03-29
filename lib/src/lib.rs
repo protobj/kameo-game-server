@@ -1,6 +1,10 @@
+use bytes::Bytes;
 use common::config::ServerRoleId;
+use kameo::Reply;
 use kameo::remote::ActorSwarm;
 use kameo::remote::dial_opts::DialOpts;
+use protocol::cmd::Cmd;
+use serde::{Deserialize, Serialize};
 use std::ops::Deref;
 use tokio::sync::watch::Receiver;
 
@@ -85,4 +89,15 @@ pub mod prelude {
     pub use crate::gate::GateNode;
     pub use crate::login::LoginNode;
     pub use crate::world::WorldNode;
+}
+
+#[derive(serde::Serialize, serde::Deserialize)]
+pub struct Gate2OtherReq {
+    pub(crate) cmd: Cmd,
+    pub(crate) bytes: Bytes,
+}
+#[derive(Reply, Serialize, Deserialize)]
+pub struct Gate2OtherRes {
+    pub cmd: Cmd,
+    pub bytes: Bytes,
 }
