@@ -22,5 +22,6 @@ thiserror = { workspace = true }
 dashmap = { workspace = true }
 backon = { workspace = true }
 lazy_static = "1.5.0"
-crossbeam-utils = { workspace = true }
 crossbeam = { workspace = true }
+libp2p = { workspace = true }
+libp2p-identity = { workspace = true }

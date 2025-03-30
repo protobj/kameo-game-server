@@ -49,6 +49,8 @@ integer-encoding = "4.0.2"
 redis = { version = "0.29.1", features = ["tokio-comp", "aio", "connection-manager"] }
 dashmap = "*"
 backon = "*"
+libp2p = { version = "0.55.0", features = ["cbor", "gossipsub", "dns", "kad", "mdns", "macros", "quic", "request-response", "rsa", "serde", "tokio"] }
+libp2p-identity = { version = "0.2.9", features = ["rand", "rsa"] }
 
 
 [profile.dev]
