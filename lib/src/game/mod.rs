@@ -1,28 +1,15 @@
 use crate::gate::{GateActor, GateActorError};
-use crate::{Gate2OtherReq, Gate2OtherRes, Node};
+use crate::node::Node;
+use crate::{DataError, ServerMessage};
 use common::config::{GameServerConfig, GlobalConfig, ServerRoleId};
 use kameo::actor::{ActorRef, RemoteActorRef};
 use kameo::message::{Context, Message};
 use kameo::{remote_message, Actor, RemoteActor};
 use std::fmt::{Display, Formatter};
 use std::sync::Arc;
-
+pub mod node;
 pub mod player;
-pub struct GameNode {
-    global_config: Arc<GlobalConfig>,
-    role_id: ServerRoleId,
-    game_ref: Option<ActorRef<GameActor>>,
-}
-
-impl GameNode {
-    pub fn new(global_config: Arc<GlobalConfig>, role_id: ServerRoleId) -> Self {
-        Self {
-            global_config,
-            role_id,
-            game_ref: None,
-        }
-    }
-}
+pub mod router;
 #[derive(RemoteActor)]
 pub struct GameActor {
     global_config: Arc<GlobalConfig>,
@@ -40,49 +27,6 @@ impl GameActor {
             role_id,
             game_server_config,
         }
-    }
-}
-#[async_trait::async_trait]
-impl Node for GameNode {
-    async fn start(&mut self) -> anyhow::Result<()> {
-        let global_config = self.global_config.clone();
-        let role_id = self.role_id.clone();
-        let game_config = global_config.find_game_config(role_id.1);
-        let game_config = match game_config {
-            None => return Err(anyhow::anyhow!("Game config not found:{}", role_id)),
-            Some(x) => x,
-        };
-
-        self.start_actor_swarm(
-            game_config.in_address.clone(),
-            global_config.find_all_in_address(),
-        )
-        .await?;
-        //集群启动好后,启动GameActor
-        let game_ref = kameo::spawn(GameActor::new(global_config, role_id, game_config));
-        let result = game_ref.wait_startup_result().await;
-        if let Err(e) = result {
-            return Err(anyhow::anyhow!(
-                "GameActor:{} start failed:{}",
-                self.server_role_id(),
-                e.to_string()
-            ));
-        };
-        self.game_ref = Some(game_ref);
-        tracing::info!("GameActor start success:{}", self.role_id);
-        Ok(())
-    }
-
-    async fn stop(&mut self) -> anyhow::Result<()> {
-        let actor_ref = self.game_ref.take().unwrap();
-        //停止actor
-        actor_ref.kill();
-        actor_ref.wait_for_stop().await;
-        Ok(())
-    }
-
-    fn server_role_id(&self) -> ServerRoleId {
-        self.role_id.clone()
     }
 }
 impl Actor for GameActor {
@@ -109,21 +53,6 @@ impl Display for GameActorError {
             GameActorError::RegisterRemoteFail(x) => {
                 f.write_fmt(format_args!("Failed to register remote game config:{}", x))
             }
-        }
-    }
-}
-
-#[remote_message("Gate2OtherReq")]
-impl Message<Gate2OtherReq> for GameActor {
-    type Reply = Gate2OtherRes;
-    async fn handle(
-        &mut self,
-        msg: Gate2OtherReq,
-        ctx: &mut Context<Self, Self::Reply>,
-    ) -> Self::Reply {
-        Gate2OtherRes {
-            cmd: msg.cmd,
-            bytes: msg.bytes,
         }
     }
 }

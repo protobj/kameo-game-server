@@ -18,7 +18,7 @@ pub struct Args {
     #[arg(short, long,action = ArgAction::Append,value_parser = parse_role_id)]
     pub server: Vec<ServerRoleId>,
 }
-#[derive(Clone, Debug,Serialize, Deserialize)]
+#[derive(Clone, Debug,Serialize, Deserialize,PartialEq,Eq,Hash)]
 pub struct ServerRoleId(pub ServerRole, pub u32);
 impl Display for ServerRoleId {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
@@ -200,7 +200,7 @@ pub struct GameServerConfig {
     pub in_address: String,
     pub keydb: RedisConfig,
 }
-#[derive(Debug, Clone, ValueEnum, Deserialize,Serialize)]
+#[derive(Debug, Clone, ValueEnum, Deserialize,Serialize,Hash,Eq, PartialEq)]
 pub enum ServerRole {
     Login,
     Gate,

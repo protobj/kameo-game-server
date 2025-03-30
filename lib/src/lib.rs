@@ -1,103 +1,88 @@
-use bytes::Bytes;
-use common::config::ServerRoleId;
+use crate::DataError::{Other, RspError};
+use bytes::{Bytes, BytesMut};
 use kameo::Reply;
-use kameo::remote::ActorSwarm;
-use kameo::remote::dial_opts::DialOpts;
-use protocol::cmd::Cmd;
+use prost::Message;
+use protocol::base_cmd::BaseError::ErrorServerInternal;
+use protocol::base_cmd::ErrorRsp;
 use serde::{Deserialize, Serialize};
 use std::ops::Deref;
-use tokio::sync::watch::Receiver;
+use thiserror::Error;
 
+mod discovery;
 mod game;
 mod gate;
 mod login;
+pub mod node;
+mod registry;
 mod world;
-
-pub enum Signal {
-    None,
-    Stop,
-}
-#[async_trait::async_trait]
-pub trait Node: Send + Sync {
-    async fn init(&mut self, mut signal_rx: Receiver<Signal>) -> anyhow::Result<()> {
-        tracing::info!("starting node :{}", self.server_role_id());
-
-        self.start().await?;
-        loop {
-            let changed = signal_rx.changed().await;
-            match changed {
-                Ok(_) => {
-                    let signal = signal_rx.borrow();
-                    match signal.deref() {
-                        Signal::Stop => {
-                            break;
-                        }
-                        _ => {}
-                    }
-                }
-                Err(e) => {
-                    tracing::error!("signal recv err :{}", self.server_role_id());
-                }
-            }
-        }
-        tracing::info!("stopping node :{}", self.server_role_id());
-        self.stop().await?;
-        tracing::info!("stop node :{}", self.server_role_id());
-        Ok(())
-    }
-
-    async fn start(&mut self) -> anyhow::Result<()>;
-
-    async fn stop(&mut self) -> anyhow::Result<()>;
-
-    fn server_role_id(&self) -> ServerRoleId;
-
-    async fn start_actor_swarm(
-        &self,
-        self_address: String,
-        other_addresses: Vec<String>,
-    ) -> anyhow::Result<()> {
-        //启动集群
-        let role_id = self.server_role_id();
-        let actor_swarm = ActorSwarm::bootstrap()
-            .expect(format!("actor_swarm bootstrap failed :{}", role_id).as_str());
-        let listener_id = actor_swarm.listen_on(self_address.parse()?).await?;
-        tracing::info!(
-            "ActorSwarm[{}] listening addr:{} id:{}",
-            role_id,
-            self_address,
-            listener_id
-        );
-        //连接其他地址
-        for other_addr in other_addresses {
-            if other_addr == self_address {
-                continue;
-            }
-            actor_swarm
-                .dial(
-                    DialOpts::unknown_peer_id()
-                        .address(other_addr.parse()?)
-                        .build(),
-                )
-                .await?;
-        }
-        Ok(())
-    }
-}
 pub mod prelude {
-    pub use crate::game::GameNode;
-    pub use crate::gate::GateNode;
-    pub use crate::login::LoginNode;
-    pub use crate::world::WorldNode;
+    pub use crate::game::node::GameNode;
+    pub use crate::gate::node::GateNode;
+    pub use crate::login::node::LoginNode;
+    pub use crate::world::node::WorldNode;
 }
 
-#[derive(serde::Serialize, serde::Deserialize)]
-pub struct Gate2OtherReq {
-    pub(crate) cmd: Cmd,
-    pub(crate) bytes: Bytes,
+#[derive(Reply, serde::Serialize, serde::Deserialize)]
+pub struct ServerMessage {
+    pub(crate) cmd: i32,
+    pub(crate) data: Bytes,
 }
-#[derive(Reply, Serialize, Deserialize)]
-pub struct Gate2OtherRes {
-    pub cmd: Cmd,
-    pub bytes: Bytes,
+
+#[derive(Error, Debug, Deserialize, Serialize)]
+pub enum DataError {
+    //请求错误
+    #[error("data error:{0:?} msg:{1}")]
+    RspError(i32, String),
+    #[error("other error:{0}")]
+    Other(String),
+}
+
+impl From<DataError> for ErrorRsp {
+    fn from(value: DataError) -> Self {
+        match value {
+            RspError(code, msg) => ErrorRsp {
+                cmd: 0,
+                code,
+                message: msg,
+            },
+            Other(msg) => ErrorRsp {
+                cmd: 0,
+                code: ErrorServerInternal as i32,
+                message: msg,
+            },
+        }
+    }
+}
+
+pub type ReqResult = Result<ServerMessage, DataError>;
+pub type NtfResult = Result<(), DataError>;
+
+pub struct Req<T: Message>(pub T);
+
+pub fn encode<T: Message>(message: T) -> Result<Bytes, DataError> {
+    let mut bytes_mut = BytesMut::new();
+    message
+        .encode(&mut bytes_mut)
+        .map_err(|x| DataError::Other(x.to_string()))?;
+    Ok(bytes_mut.freeze())
+}
+
+pub fn decode<T: Message + Default>(bytes: Bytes) -> Result<T, DataError> {
+    T::decode(bytes.as_ref()).map_err(|x| DataError::Other(x.to_string()))
+}
+#[macro_export]
+macro_rules! proc_req {
+    ($msg:ident,$self:ident,$handler:ident, $req_type:ty) => {{
+        let rsp = $handler($self, crate::decode::<$req_type>($msg.data)?).await?;
+        Ok(ServerMessage {
+            cmd: rsp.cmd(),
+            data: crate::encode(rsp)?,
+        })
+    }};
+}
+#[macro_export]
+macro_rules! proc_ntf {
+    ($msg:ident,$self:ident,$handler:ident, $req_type:ty) => {{
+        $handler($self, crate::decode::<$req_type>($msg.data)?).await?;
+    }};
 }

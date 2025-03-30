@@ -3,15 +3,16 @@ syntax = "proto3";
 package base_cmd;
 
 enum BaseCmd {
-    BaseCmdNone = 0;
+    CmdNone = 0;
     CmdErrorRsp = 601;
 }
 
 
 enum BaseError {
-    BaseErrorNone = 0;
-    ServerInternalError = 601;
-    UnknownCommandError = 602;
+    ErrorNone = 0;
+    ErrorServerInternal = 601;
+    ErrorUnknownCommand = 602;
+    ErrorFunctionNotImpliment = 603;
 }
 
 message ErrorRsp {

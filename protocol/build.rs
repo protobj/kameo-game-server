@@ -1,10 +1,11 @@
 use regex::Regex;
 use std::collections::{BTreeMap, HashMap, HashSet};
-use std::fmt::Write;
+use std::fmt::{Debug, Write};
 use std::fs;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::{Path, PathBuf};
+use prost_build::{Service, ServiceGenerator};
 
 fn find_proto_files(dir: &Path) -> Result<Vec<String>, std::io::Error> {
     let mut proto_files = Vec::new();
@@ -35,22 +36,24 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     let base_dir = "./src";
     let proto_dir = Path::new(base_dir);
-    let mut proto_files = find_proto_files(proto_dir)?;
+    let proto_files = find_proto_files(proto_dir)?;
 
     check_code(proto_files.clone(), "cmd.txt", true)?;
     check_code(proto_files.clone(), "error.txt", false)?;
-
-    proto_files.push("./src/client/cmd.proto".to_string());
-    proto_files.push("./src/client/error.proto".to_string());
+    // 试试不生成合成文件的枚举
+    // proto_files.push("./src/client/cmd.proto".to_string());
+    // proto_files.push("./src/client/error.proto".to_string());
 
     prost_build::Config::new()
         .bytes(&["."])
         .type_attribute(".", "#[derive(serde::Serialize, serde::Deserialize)]")
+        .retain_enum_prefix()
+        .format(true)
         .compile_protos(&proto_files, &[base_dir])?;
     // 2. 生成 mod.rs
     let mod_path = PathBuf::from(base_dir).join("lib.rs");
     let mut mod_content = String::new();
-    mod_content.push_str("pub mod helper;\n");
+
     let modules: Vec<_> = proto_files
         .iter()
         .map(|file| {
@@ -68,6 +71,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         )?;
         writeln!(&mut mod_content, "}}")?;
     }
+    mod_content.push_str("pub mod extension;\n");
     // 写入 lib.rs
     fs::write(mod_path, mod_content)?;
     Ok(())
@@ -97,12 +101,14 @@ fn check_code(
         }
     }
     let re_code = Regex::new(r"(\w+)\s*=\s*\s*(\d+)\s*").unwrap();
+    let mut extension_content = String::new();
     for file in proto_files {
         if !file.ends_with("_cmd.proto") {
             continue;
         }
         let file_name = Path::new(&file).file_name().unwrap().to_str().unwrap();
-        let enum_name = snake_to_camel(&file_name.replace(".proto", ""));
+        let mod_name = file_name.replace(".proto", "");
+        let enum_name = snake_to_camel(&mod_name);
         let enum_name = if cmd {
             enum_name
         } else {
@@ -144,6 +150,27 @@ fn check_code(
                 if !unique_codes.insert(code) {
                     panic!("{} is already defined code:{}", enum_name, code);
                 }
+                //生成扩展文件
+                if cmd {
+                    extension_content.push_str(
+                        format!(
+                            "
+impl crate::{}::{} {{
+    pub const CMD: i32 = {};
+
+    pub const fn cmd(&self) -> i32 {{
+        {}
+    }}
+}}
+                    ",
+                            mod_name,
+                            enum_unit_name.replace("Cmd", ""),
+                            code,
+                            code
+                        )
+                        .as_str(),
+                    )
+                }
                 code_map.insert(code, enum_unit_name.to_string());
             }
         }
@@ -157,19 +184,20 @@ fn check_code(
         proto_content.push_str("enum Cmd{\n");
         proto_content.push_str("    CmdNone = 0;\n");
         for x in code_map {
-            proto_content.push_str(&format!("    Cmd{}={};\n", x.1, x.0));
+            proto_content.push_str(&format!("    {} = {};\n", x.1, x.0));
         }
     } else {
         proto_content.push_str("package error;\n\n");
         proto_content.push_str("enum Error{\n");
         proto_content.push_str("    Ok = 0;\n");
         for x in code_map {
-            proto_content.push_str(&format!("    Error{}={};\n", x.1, x.0));
+            proto_content.push_str(&format!("    {} = {};\n", x.1, x.0));
         }
     }
     proto_content.push_str("}\n");
     if cmd {
         fs::write(Path::new("./src/client/cmd.proto"), proto_content)?;
+        fs::write(Path::new("./src/extension.rs"), extension_content)?;
     } else {
         fs::write(Path::new("./src/client/error.proto"), proto_content)?;
     }

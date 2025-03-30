@@ -28,13 +28,15 @@ tokio = { version = "*", features = ["full"] }
 clap = { version = "*", features = ["derive"] }
 anyhow = "*"
 crossbeam-utils = "*"
+crossbeam = "*"
 bytes = "*"
 prost = { version = "*", features = ["default"] }
 prost-build = { version = "*", features = ["default"] }
 prost-types = { version = "*", features = ["default"] }
 serde = { version = "*", features = ["derive"] }
 async-trait = "*"
-kameo = { git = "https://github.com/tqwewe/kameo.git", features = ["remote"] }
+kameo = { version = "0.16", features = ["remote"] }
+kameo_actors = { version = "0.1.0" }
 thiserror = "*"
 tracing = "*"
 tracing-subscriber = { version = "*", features = ["local-time", "env-filter", "tracing-log"] }
@@ -44,6 +46,10 @@ time = { version = "0.3.41", features = ["local-offset"] }
 futures = { version = "*" }
 bitflags = { version = "2.7.x", features = ["serde"] }
 integer-encoding = "4.0.2"
+redis = { version = "0.29.1", features = ["tokio-comp", "aio", "connection-manager"] }
+dashmap = "*"
+backon = "*"
+
 
 [profile.dev]
 opt-level = 0

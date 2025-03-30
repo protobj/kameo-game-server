@@ -59,17 +59,17 @@ impl Type {
 pub struct Packet {
     pub r#type: Type,
     pub cmd: i32,
-    pub data: Option<Bytes>,
+    pub data: Bytes,
 }
 
 pub struct Encoder {}
 impl Encoder {
     pub fn encode(packet: Packet) -> Bytes {
-        let mut output = BytesMut::with_capacity(1 + packet.data.as_ref().map_or(0, |b| b.len()));
+        let mut output = BytesMut::with_capacity(1 + packet.data.len());
         output.put_u8(packet.r#type as u8);
-        if let Some(bytes) = packet.data {
-            output.put(bytes);
-        }
+        if packet.data.len() > 0 {
+            output.put(packet.data);
+        };
         output.freeze()
     }
 }
@@ -100,14 +100,14 @@ impl Packet {
         Packet {
             r#type,
             cmd: 0,
-            data: None,
+            data: Bytes::default(),
         }
     }
     pub fn new_data(r#type: Type, cmd: i32, bytes: Bytes) -> Self {
         Packet {
             r#type,
             cmd,
-            data: Some(bytes),
+            data: bytes,
         }
     }
 }

@@ -1,7 +1,8 @@
 use crate::game::GameActor;
-use crate::{Gate2OtherReq, Gate2OtherRes};
+use crate::{DataError, ServerMessage};
 use kameo::message::{Context, Message};
-use kameo::{Actor, RemoteActor, remote_message};
+use kameo::{remote_message, Actor, RemoteActor};
+use protocol::base_cmd::BaseError::ErrorUnknownCommand;
 
 #[derive(RemoteActor)]
 pub struct PlayerActor;
@@ -11,16 +12,18 @@ impl Actor for PlayerActor {
 }
 
 #[remote_message("Gate2OtherReq")]
-impl Message<Gate2OtherReq> for PlayerActor {
-    type Reply = Gate2OtherRes;
+impl Message<ServerMessage> for PlayerActor {
+    type Reply = Result<ServerMessage, DataError>;
     async fn handle(
         &mut self,
-        msg: Gate2OtherReq,
-        ctx: &mut Context<Self, Self::Reply>,
+        msg: ServerMessage,
+        _ctx: &mut Context<Self, Self::Reply>,
     ) -> Self::Reply {
-        Gate2OtherRes {
-            cmd: msg.cmd,
-            bytes: msg.bytes,
+        match msg.cmd {
+            _ => Err(DataError::RspError(
+                 ErrorUnknownCommand as i32,
+                format!("UnknownCommandError:{}", msg.cmd),
+            )),
         }
     }
 }

@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 common = { path = "../common" }
+redis = { workspace = true }
 kameo = { workspace = true }
 tokio = { workspace = true }
 anyhow = { workspace = true }
@@ -13,7 +14,13 @@ async-trait = { workspace = true }
 serde = { workspace = true }
 protocol = { path = "../protocol" }
 prost = { workspace = true }
-message-io = "*"
+message-io = "0.19"
 bytes = { workspace = true }
 scc = "*"
 integer-encoding = { workspace = true }
+thiserror = { workspace = true }
+dashmap = { workspace = true }
+backon = { workspace = true }
+lazy_static = "1.5.0"
+crossbeam-utils = { workspace = true }
+crossbeam = { workspace = true }

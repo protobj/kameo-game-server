@@ -4,37 +4,37 @@ package login_cmd;
 
 
 enum LoginCmd {
-  CmdLoginNone = 0;//Empty,CMD开始头
-  CmdLoginReq = 1001;//客户端登陆消息
-  CmdLoginRsp = 1002;//登录响应
-  CmdRegisterReq = 1003;//注册请求
-  CmdRegisterRsp = 1004;//注册返回
-  CmdLogoutReq = 1005;//登出请求
-  CmdLogoutRsp = 1006;//玩家登出
+    CmdLoginNone = 0;//Empty,CMD开始头
+    CmdLoginReq = 1001;//客户端登陆消息
+    CmdLoginRsp = 1002;//登录响应
+    CmdRegisterReq = 1003;//注册请求
+    CmdRegisterRsp = 1004;//注册返回
+    CmdLogoutReq = 1005;//登出请求
+    CmdLogoutRsp = 1006;//玩家登出
 }
 
-enum LoginError{
-  LoginErrorNone = 0;
-  LoginErrorAccountNotExits = 1001;
+enum LoginError {
+    ErrorLoginNone = 0;
+    ErrorLoginAccountNotExits = 1001;
 }
 
 message LoginReq {
-  int32 server_id = 1;//服务器id
-  string account = 2;//账号
+    int32 server_id = 1;//服务器id
+    string account = 2;//账号
 }
-message LoginRsp{
+message LoginRsp {
 
 }
 
-message RegisterReq{
+message RegisterReq {
 
 }
-message RegisterRsp{
+message RegisterRsp {
 
 }
-message LogoutReq{
+message LogoutReq {
 
 }
-message LogoutRsp{
+message LogoutRsp {
 
 }

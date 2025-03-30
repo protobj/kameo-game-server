@@ -1,12 +1,12 @@
-use std::sync::Arc;
 use anyhow::Error;
+use common::config::{init_config, Args, GlobalConfig, ServerRole, ServerRoleId, ARGS};
+use common::logging::init_log;
+use lib::node::{Node, Signal};
+use lib::prelude::{GameNode, GateNode, LoginNode, WorldNode};
+use std::sync::Arc;
 use tokio::sync::watch;
 use tokio::sync::watch::Sender;
 use tokio::task::JoinHandle;
-use common::config::{init_config, Args, GlobalConfig, ServerRole, ServerRoleId, ARGS};
-use common::logging::init_log;
-use lib::{Node, Signal};
-use lib::prelude::{GameNode, GateNode, LoginNode, WorldNode};
 
 pub async fn start() -> Result<(), Error> {
     //1.初始化命令行参数
@@ -75,7 +75,7 @@ fn listen_stop(tx: Sender<Signal>, join_handles: &mut Vec<JoinHandle<()>>) {
         };
         #[cfg(unix)]
         let terminate = async {
-            use tokio::signal::unix::{SignalKind, signal};
+            use tokio::signal::unix::{signal, SignalKind};
             let mut sigterm =
                 signal(SignalKind::terminate()).expect("Failed to install SIGTERM handler");
             sigterm.recv().await;

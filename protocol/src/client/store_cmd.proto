@@ -3,14 +3,20 @@ syntax = "proto3";
 package store_cmd;
 
 
-
-enum StoreCmd{
-  StoreCmdNone = 0;
-  CmdStoreInfoReq = 1101;
-  CmdStoreInfoRsp = 1102;
+enum StoreCmd {
+    StoreCmdNone = 0;
+    CmdStoreInfoReq = 1101;
+    CmdStoreInfoRsp = 1102;
 }
 
-enum StoreError{
-  StoreErrorNode = 0;
-  StoreErrorNotOpen = 1101;
+enum StoreError {
+    ErrorStoreNone = 0;
+    ErrorStoreNotOpen = 1101;
+}
+
+message StoreInfoReq {
+    int32 store_id = 1;
+}
+message StoreInfoRsp {
+    int32 store_id = 1;
 }
