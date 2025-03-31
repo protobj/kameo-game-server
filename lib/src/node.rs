@@ -27,7 +27,7 @@ pub trait Node: Send + Sync {
                     }
                 }
                 Err(e) => {
-                    tracing::error!("signal recv err :{}", self.server_role_id());
+                    tracing::error!("{} signal recv err :{}", self.server_role_id(),e);
                 }
             }
         }
