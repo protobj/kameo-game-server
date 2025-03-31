@@ -89,3 +89,6 @@ path = "src/world.rs"
 [[bin]]
 name = "login"
 path = "src/login.rs"
+[[bin]]
+name = "center"
+path = "src/center.rs"

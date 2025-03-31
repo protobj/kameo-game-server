@@ -1,8 +1,8 @@
 use anyhow::Error;
-use common::config::{init_config, Args, GlobalConfig, ServerRole, ServerRoleId, ARGS};
+use common::config::{ARGS, Args, GlobalConfig, ServerRole, ServerRoleId, init_config};
 use common::logging::init_log;
 use lib::node::{Node, Signal};
-use lib::prelude::{GameNode, GateNode, LoginNode, WorldNode};
+use lib::prelude::{CenterNode, GameNode, GateNode, LoginNode, WorldNode};
 use std::sync::Arc;
 use tokio::sync::watch;
 use tokio::sync::watch::Sender;
@@ -75,7 +75,7 @@ fn listen_stop(tx: Sender<Signal>, join_handles: &mut Vec<JoinHandle<()>>) {
         };
         #[cfg(unix)]
         let terminate = async {
-            use tokio::signal::unix::{signal, SignalKind};
+            use tokio::signal::unix::{SignalKind, signal};
             let mut sigterm =
                 signal(SignalKind::terminate()).expect("Failed to install SIGTERM handler");
             sigterm.recv().await;
@@ -106,5 +106,6 @@ fn create_node(
         ServerRole::Gate => Box::new(GateNode::new(config, server_role_id)),
         ServerRole::Game => Box::new(GameNode::new(config, server_role_id)),
         ServerRole::World => Box::new(WorldNode::new(config, server_role_id)),
+        ServerRole::Center => Box::new(CenterNode::new(config)),
     }
 }

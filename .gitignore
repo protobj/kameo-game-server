@@ -7,3 +7,5 @@
 ./logs
 /protocol/src/client/cmd.proto
 /protocol/src/client/error.proto
+/protocol/src/lib.rs
+/protocol/src/extension.rs

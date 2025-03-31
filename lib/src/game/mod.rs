@@ -4,7 +4,7 @@ use crate::{DataError, ServerMessage};
 use common::config::{GameServerConfig, GlobalConfig, ServerRoleId};
 use kameo::actor::{ActorRef, RemoteActorRef};
 use kameo::message::{Context, Message};
-use kameo::{remote_message, Actor, RemoteActor};
+use kameo::{Actor, RemoteActor, remote_message};
 use std::fmt::{Display, Formatter};
 use std::sync::Arc;
 pub mod node;
@@ -29,6 +29,7 @@ impl GameActor {
         }
     }
 }
+
 impl Actor for GameActor {
     type Error = GameActorError;
 

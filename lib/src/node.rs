@@ -54,7 +54,7 @@ pub trait Node: Send + Sync {
             .expect(format!("actor_swarm bootstrap failed :{}", role_id).as_str());
         let listener_id = actor_swarm.listen_on(self_address.parse()?).await?;
         tracing::info!(
-            "ActorSwarm[{}] listening addr:{} id:{}",
+            "ActorSwarm[{}] listening addr:{} listener_id:{}",
             role_id,
             self_address,
             listener_id

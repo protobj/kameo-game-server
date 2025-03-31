@@ -54,6 +54,7 @@ pub struct GlobalConfig {
     gate: Vec<GateServerConfig>,
     world: Vec<WorldServerConfig>,
     game: Vec<GameServerConfig>,
+    center_in_address:String,
 }
 
 impl From<&Args> for anyhow::Result<GlobalConfig> {
@@ -77,6 +78,7 @@ impl GlobalConfig {
     pub fn find_game_config(&self, id: u32) -> Option<GameServerConfig> {
         return self.game.iter().find(|g| g.id == id).cloned();
     }
+
     pub fn find_all_login_config(&self) -> Vec<LoginServerConfig> {
         return self.login.clone();
     }
@@ -111,6 +113,10 @@ impl GlobalConfig {
 
     pub fn game(&self) -> &Vec<GameServerConfig> {
         &self.game
+    }
+
+    pub fn center_in_address(&self) -> &str {
+        &self.center_in_address
     }
 }
 
@@ -206,6 +212,7 @@ pub enum ServerRole {
     Gate,
     Game,
     World,
+    Center,
 }
 impl Display for ServerRole {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
@@ -214,6 +221,7 @@ impl Display for ServerRole {
             ServerRole::Gate => f.write_str("gate"),
             ServerRole::Game => f.write_str("game"),
             ServerRole::World => f.write_str("world"),
+            ServerRole::Center => f.write_str("center"),
         }
     }
 }

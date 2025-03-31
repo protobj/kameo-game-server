@@ -33,7 +33,7 @@ impl Node for GameNode {
 
         self.start_actor_swarm(
             game_config.in_address.clone(),
-            global_config.find_all_in_address(),
+            vec![global_config.center_in_address().to_string()],
         )
         .await?;
         //集群启动好后,启动GameActor

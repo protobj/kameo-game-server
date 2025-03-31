@@ -15,11 +15,14 @@ mod login;
 pub mod node;
 mod registry;
 mod world;
+
+mod center;
 pub mod prelude {
     pub use crate::game::node::GameNode;
     pub use crate::gate::node::GateNode;
     pub use crate::login::node::LoginNode;
     pub use crate::world::node::WorldNode;
+    pub use crate::center::node::CenterNode;
 }
 
 #[derive(Reply, serde::Serialize, serde::Deserialize)]
