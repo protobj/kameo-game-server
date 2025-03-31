@@ -1,8 +1,11 @@
-use std::ops::Deref;
+use crate::center::{CenterActor, CenterMessage};
+use common::config::{ServerRole, ServerRoleId};
+use kameo::actor::RemoteActorRef;
 use kameo::prelude::ActorSwarm;
 use kameo::remote::dial_opts::DialOpts;
+use std::ops::Deref;
+use std::time::Duration;
 use tokio::sync::watch::Receiver;
-use common::config::ServerRoleId;
 
 pub enum Signal {
     None,
@@ -27,7 +30,7 @@ pub trait Node: Send + Sync {
                     }
                 }
                 Err(e) => {
-                    tracing::error!("{} signal recv err :{}", self.server_role_id(),e);
+                    tracing::error!("{} signal recv err :{}", self.server_role_id(), e);
                 }
             }
         }
@@ -70,6 +73,24 @@ pub trait Node: Send + Sync {
                         .address(other_addr.parse()?)
                         .build(),
                 )
+                .await?;
+        }
+
+        Ok(())
+    }
+    async fn connect_center(&self) -> anyhow::Result<()> {
+        let actor_swarm = ActorSwarm::get().unwrap();
+        let server_role_id = self.server_role_id();
+        //连接Center
+        if server_role_id.0 != ServerRole::Center {
+            let actor_ref = RemoteActorRef::<CenterActor>::lookup(&ServerRole::Center.to_string())
+                .await?
+                .unwrap();
+            actor_ref
+                .tell(&CenterMessage::Register {
+                    server_role_id: self.server_role_id(),
+                    peer_id: actor_swarm.local_peer_id().clone(),
+                })
                 .await?;
         }
         Ok(())

@@ -46,6 +46,7 @@ impl Node for GateNode {
             ));
         };
         self.gate_ref = Some(gate_ref);
+        self.connect_center().await?;
         tracing::info!("GateActor start success:{}", self.role_id);
         Ok(())
     }

@@ -34,6 +34,7 @@ impl Node for CenterNode {
             ));
         };
         self.center_ref = Some(center_ref);
+
         tracing::info!("CenterActor start success");
         Ok(())
     }

@@ -56,6 +56,7 @@ impl Node for LoginNode {
             ));
         };
         self.login_ref = Some(login_ref);
+        self.connect_center().await?;
         tracing::info!("LoginActor start success:{}", self.role_id);
         Ok(())
     }

@@ -47,6 +47,7 @@ impl Node for GameNode {
             ));
         };
         self.game_ref = Some(game_ref);
+        self.connect_center().await?;
         tracing::info!("GameActor start success:{}", self.role_id);
         Ok(())
     }

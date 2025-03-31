@@ -45,6 +45,7 @@ impl Node for WorldNode {
             ));
         };
         self.world_ref = Some(login_ref);
+        self.connect_center().await?;
         tracing::info!("WorldActor start success:{}", self.role_id);
         Ok(())
     }
