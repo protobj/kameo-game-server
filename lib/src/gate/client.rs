@@ -1,13 +1,15 @@
 use crate::game::GameActor;
 use crate::gate::net_server::NetServerSignal;
 use crate::gate::packet::{Encoder, Packet, Type};
+use crate::gate::GateActor;
+use crate::login::node::LoginActor;
 use crate::world::WorldActor;
 use crate::{DataError, ServerMessage};
 use bytes::Bytes;
 use common::config::ServerRole;
-use kameo::Actor;
-use kameo::actor::RemoteActorRef;
+use kameo::actor::{ActorRef, RemoteActorRef};
 use kameo::message::{Context, Message};
+use kameo::Actor;
 use message_io::network::{Endpoint, SendStatus};
 use message_io::node::NodeHandler;
 use protocol::base_cmd::BaseCmd::CmdErrorRsp;
@@ -27,7 +29,10 @@ pub struct ClientActor {
 }
 
 impl ClientActor {
-    pub fn new(endpoint: Endpoint, handler: NodeHandler<NetServerSignal>) -> Self {
+    pub fn new(
+        endpoint: Endpoint,
+        handler: NodeHandler<NetServerSignal>,
+    ) -> Self {
         Self {
             endpoint,
             handler,
@@ -177,27 +182,3 @@ impl Message<ClientMessage> for ClientActor {
         }
     }
 }
-
-pub struct NetData<T: prost::Message>(pub T);
-impl<T: prost::Message> Deref for NetData<T> {
-    type Target = T;
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-impl<T: prost::Message + Default> NetData<T> {
-    fn decode(bytes: Bytes) -> ClientResult<T> {
-        match crate::decode::<T>(bytes) {
-            Ok(x) => Ok(NetData(x)),
-            Err(e) => Err(DataError::Other(e.to_string())),
-        }
-    }
-}
-
-impl<T: prost::Message> NetData<T> {
-    pub fn new(rsp: T) -> Self {
-        Self(rsp)
-    }
-}
-
-type ClientResult<T> = Result<NetData<T>, DataError>;

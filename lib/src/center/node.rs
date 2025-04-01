@@ -2,7 +2,6 @@ use crate::center::CenterActor;
 use crate::node::Node;
 use common::config::{GlobalConfig, ServerRole, ServerRoleId};
 use kameo::actor::ActorRef;
-use std::fmt::{Display, Formatter};
 use std::sync::Arc;
 
 pub struct CenterNode {

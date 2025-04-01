@@ -1,26 +1,22 @@
 use crate::gate::net_server::{NetServer, NetServerSignal};
 use common::config::{GateServerConfig, GlobalConfig, ServerRoleId};
-use kameo::actor::{ActorRef, PreparedActor, WeakActorRef};
+use kameo::actor::{ActorRef, WeakActorRef};
 use kameo::error::ActorStopReason;
-use kameo::message::{Context, Message};
-use kameo::{remote_message, Actor, RemoteActor};
+use kameo::{Actor, RemoteActor};
 use message_io::node::{NodeHandler, NodeTask};
-use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 use std::sync::Arc;
-use crate::node::Node;
 
-pub mod net_server;
-pub mod packet;
 pub mod client;
+pub mod net_server;
 pub mod node;
+pub mod packet;
 #[derive(RemoteActor)]
 pub struct GateActor {
     global_config: Arc<GlobalConfig>,
     role_id: ServerRoleId,
     gate_config: GateServerConfig,
     node_task: Option<(NodeTask, NodeHandler<NetServerSignal>)>,
-    
 }
 
 impl GateActor {
@@ -61,7 +57,7 @@ impl Actor for GateActor {
 
         let node_task = net_server.run();
         self.node_task = Some(node_task);
-        
+
         Ok(())
     }
     fn on_stop(

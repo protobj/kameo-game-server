@@ -78,21 +78,23 @@ pub trait Node: Send + Sync {
 
         Ok(())
     }
-    async fn connect_center(&self) -> anyhow::Result<()> {
+    async fn connect_center(&self) -> anyhow::Result<RemoteActorRef<CenterActor>> {
         let actor_swarm = ActorSwarm::get().unwrap();
         let server_role_id = self.server_role_id();
-        //连接Center
-        if server_role_id.0 != ServerRole::Center {
-            let actor_ref = RemoteActorRef::<CenterActor>::lookup(&ServerRole::Center.to_string())
-                .await?
-                .unwrap();
-            actor_ref
-                .tell(&CenterMessage::Register {
-                    server_role_id: self.server_role_id(),
-                    peer_id: actor_swarm.local_peer_id().clone(),
-                })
-                .await?;
+        if server_role_id.0 == ServerRole::Center {
+            return Err(anyhow::anyhow!("cant connect to self"));
         }
-        Ok(())
+        //连接Center
+
+        let actor_ref = RemoteActorRef::<CenterActor>::lookup(&ServerRole::Center.to_string())
+            .await?
+            .unwrap();
+        actor_ref
+            .tell(&CenterMessage::Register {
+                server_role_id: self.server_role_id(),
+                peer_id: actor_swarm.local_peer_id().clone(),
+            })
+            .await?;
+        Ok(actor_ref)
     }
 }

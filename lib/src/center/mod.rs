@@ -6,7 +6,7 @@ use common::config::{GameServerConfig, GlobalConfig, ServerRole, ServerRoleId};
 use kameo::actor::{ActorID, ActorRef, RemoteActorRef, WeakActorRef};
 use kameo::error::{ActorStopReason, RegistryError};
 use kameo::message::{Context, Message};
-use kameo::{remote_message, Actor, RemoteActor};
+use kameo::{Actor, RemoteActor, remote_message};
 use libp2p_identity::PeerId;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -276,5 +276,64 @@ impl Message<CenterMessage> for CenterActor {
                 self.unregister(server_role_id, peer_id);
             }
         };
+    }
+}
+#[derive(Deserialize, Serialize)]
+pub enum SearchServerMessage {
+    Ask { server_role: ServerRole },
+    AskById { server_role_id: ServerRoleId },
+}
+#[remote_message("SearchServerMessage")]
+impl Message<SearchServerMessage> for CenterActor {
+    type Reply = String;
+
+    async fn handle(
+        &mut self,
+        msg: SearchServerMessage,
+        ctx: &mut Context<Self, Self::Reply>,
+    ) -> Self::Reply {
+        match msg {
+            SearchServerMessage::Ask { server_role, .. } => {
+                let option = self.node_container.role_map.get(&server_role);
+                if let Some(mut node_map) = option {
+                    if node_map.is_empty() {
+                        return "".to_string();
+                    }
+                    let server_role_id =
+                        &node_map.values().into_iter().next().unwrap().server_role_id;
+                    return server_role_id.to_string();
+                }
+                "".to_string()
+            }
+            SearchServerMessage::AskById { server_role_id, .. } => match server_role_id.0 {
+                ServerRole::Login => self
+                    .node_container
+                    .login_map
+                    .get(&server_role_id.1)
+                    .map(|node| node.node.server_role_id.to_string())
+                    .unwrap_or("".to_string()),
+                ServerRole::Gate => self
+                    .node_container
+                    .gate_map
+                    .get(&server_role_id.1)
+                    .map(|node| node.node.server_role_id.to_string())
+                    .unwrap_or("".to_string()),
+                ServerRole::Game => self
+                    .node_container
+                    .game_map
+                    .get(&server_role_id.1)
+                    .map(|node| node.node.server_role_id.to_string())
+                    .unwrap_or("".to_string()),
+                ServerRole::World => self
+                    .node_container
+                    .world_map
+                    .get(&server_role_id.1)
+                    .map(|node| node.node.server_role_id.to_string())
+                    .unwrap_or("".to_string()),
+                _ => {
+                    unreachable!("not support server");
+                }
+            },
+        }
     }
 }
